@@ -17,10 +17,12 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(
+        source='get_full_name', read_only=True)
 
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'email', 'username')
+        fields = ('name', 'email', 'username')
         write_only_fields = ('password', )
         read_only_fields = ('is_staff', 'is_superuser', 'is_active', 'date_joined', 'id')
 

@@ -11,6 +11,7 @@ from rest_framework.response import Response
 
 from notifications.models import Notification
 from notifications.tasks import send_notifications
+from accounts.api.serializers import UserSerializer
 
 from .models import Follow
 from .serializers import *
@@ -114,10 +115,16 @@ def unfollow(request):
 
 
 @api_view(['GET'])
-def get_user_followers(request):
+def get_user_friends(request):
     user = request.user
-    following = user.get_user_followers()
-    serializer = FollowerSerializer(following, many=True)
+    friends = user.get_user_friends()
+    a = []
+    '''for friend in friends:
+        b = {}
+        b['name'] = friend.get_full_name()
+        b['username'] = friend.username
+        a.append(b)'''
+    serializer = UserSerializer(friends, many=True)
     return Response(serializer.data)
 
 

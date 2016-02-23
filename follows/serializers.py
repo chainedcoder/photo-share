@@ -25,7 +25,7 @@ class FollowRequestSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id', 'username', 'name')
 
 
-class FollowerSerializer(serializers.HyperlinkedModelSerializer):
+class FriendSerializer(serializers.HyperlinkedModelSerializer):
     username = serializers.CharField(
         source='user.username', read_only=True)
     name = serializers.CharField(
