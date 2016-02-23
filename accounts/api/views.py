@@ -1,6 +1,10 @@
 import datetime
 
+from django.shortcuts import redirect
+from django.core.urlresolvers import reverse
 from django.utils import timezone
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework import status
 from rest_framework.permissions import AllowAny
@@ -12,6 +16,7 @@ from rest_framework.authtoken.models import Token
 from .serializers import UserSerializer
 
 RESPONSE = {}
+User = get_user_model()
 
 
 @api_view(['POST'])
@@ -40,11 +45,27 @@ def change_password(request):
 
 
 @api_view(['GET'])
+def my_profile(request):
+    user = request.user
+    serializer = UserSerializer(user)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
 def profile(request):
-    pass
+    user_id = request.query_params['user_id']
+    try:
+        user = User.objects.get(pk=user_id)
+        if user == request.user:
+            return redirect(reverse('my-profile'))
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+    except ObjectDoesNotExist:
+        RESPONSE['msg'] = 'User does not exist!'
+        return Response(RESPONSE, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ObtainExpiringAuthToken(ObtainAuthToken):
+'''class ObtainExpiringAuthToken(ObtainAuthToken):
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -66,4 +87,4 @@ class ObtainExpiringAuthToken(ObtainAuthToken):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-obtain_expiring_auth_token = ObtainExpiringAuthToken.as_view()
+obtain_expiring_auth_token = ObtainExpiringAuthToken.as_view()'''
