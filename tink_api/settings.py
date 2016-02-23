@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'accounts',
     'notifications',
     'rest_framework.authtoken',
+    'follows'
 ]
 
 MIDDLEWARE_CLASSES = [

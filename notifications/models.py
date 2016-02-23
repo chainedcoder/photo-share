@@ -7,7 +7,8 @@ from django.conf import settings
 """
 Notification Types and their values:
 1 - Email alerts
-2 - Push Notifications
+2 - App Notifications
+3 - Push Notifications
 """
 
 

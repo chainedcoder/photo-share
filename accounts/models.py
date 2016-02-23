@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from itertools import chain
 
 from django.db import models
 
@@ -10,6 +11,9 @@ from django.core.mail import send_mail
 from django.core.validators import RegexValidator
 from django.contrib.auth.models import Group
 from django.core.urlresolvers import reverse
+from django.db.models import Q
+
+from follows.models import Follow
 
 
 class CustomUserManager(BaseUserManager):
@@ -106,3 +110,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         Sends an email to this User.
         """
         send_mail(subject, message, from_email, [self.email])
+
+    def get_user_followers(self):
+        followers_1 = Follow.objects.filter(user_1=self)
+        followers_2 = Follow.objects.filter(user_2=self)
+        followers = list(chain(followers_1, followers_2))
+        return followers

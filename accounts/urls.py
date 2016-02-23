@@ -1,5 +1,4 @@
-from django.conf.urls import patterns, url
-from django.core.urlresolvers import reverse_lazy
+from django.conf.urls import url
 
 from .views import *
 from .api.views import *

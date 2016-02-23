@@ -1,0 +1,1 @@
+You have a new tink request from {{ request_from }}.
