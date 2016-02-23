@@ -59,5 +59,4 @@ class UserSerializer(serializers.ModelSerializer):
             send_notifications.delay()
             return True
         except Exception, e:
-            print e
             return False

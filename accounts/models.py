@@ -12,6 +12,7 @@ from django.core.validators import RegexValidator
 from django.contrib.auth.models import Group
 from django.core.urlresolvers import reverse
 from django.db.models import Q
+from django.core.exceptions import ObjectDoesNotExist
 
 from follows.models import Follow
 
@@ -68,10 +69,13 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(_('active'), default=True,
                                     help_text=_('Designates whether this user should be treated as '
                                                 'active. Unselect this instead of deleting accounts.'))
-    email_verification_key = models.CharField(max_length=40, blank=True, null=True)
-    email_verification_key_expires = models.DateTimeField(blank=True, null=True)
+    email_verification_key = models.CharField(
+        max_length=40, blank=True, null=True)
+    email_verification_key_expires = models.DateTimeField(
+        blank=True, null=True)
     phone_verification_code = models.IntegerField(blank=True, null=True)
-    phone_verification_code_expires = models.DateTimeField(blank=True, null=True)
+    phone_verification_code_expires = models.DateTimeField(
+        blank=True, null=True)
     account_verified_date = models.DateTimeField(blank=True, null=True)
     date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
     last_seen = models.DateTimeField(_('last seen'), blank=True, null=True)
@@ -111,8 +115,16 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         """
         send_mail(subject, message, from_email, [self.email])
 
-    def get_user_followers(self):
+    def get_user_friends(self):
         followers_1 = Follow.objects.filter(user_1=self)
         followers_2 = Follow.objects.filter(user_2=self)
         followers = list(chain(followers_1, followers_2))
         return followers
+
+    def are_friends(self, other_user):
+        try:
+            Follow.objects.get(
+                Q(user_1=self, user_2=other_user) | Q(user_2=self, user_1=other_user))
+            return True
+        except ObjectDoesNotExist:
+            return False

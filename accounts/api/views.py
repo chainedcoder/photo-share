@@ -41,7 +41,8 @@ def change_password(request):
         RESPONSE['msg'] = 'Password changed successfully.'
     else:
         RESPONSE['msg'] = 'Invalid password!'
-        status_code = HTTP_400_BAD_REQUEST
+        status_code = status.HTTP_400_BAD_REQUEST
+    return Response(Response, status=status_code)
 
 
 @api_view(['GET'])
@@ -59,13 +60,15 @@ def profile(request):
         if user == request.user:
             return redirect(reverse('my-profile'))
         serializer = UserSerializer(user)
-        return Response(serializer.data)
+        RESPONSE['user'] = serializer.data
+        RESPONSE['is_friend'] = request.user.are_friends(user)
+        return Response(RESPONSE, status=status.HTTP_200_OK)
     except ObjectDoesNotExist:
         RESPONSE['msg'] = 'User does not exist!'
         return Response(RESPONSE, status=status.HTTP_400_BAD_REQUEST)
 
 
-'''class ObtainExpiringAuthToken(ObtainAuthToken):
+class ObtainExpiringAuthToken(ObtainAuthToken):
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -87,4 +90,4 @@ def profile(request):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-obtain_expiring_auth_token = ObtainExpiringAuthToken.as_view()'''
+obtain_expiring_auth_token = ObtainExpiringAuthToken.as_view()
