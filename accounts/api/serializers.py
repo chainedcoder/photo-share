@@ -22,9 +22,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('name', 'email', 'username')
-        write_only_fields = ('password', )
-        read_only_fields = ('is_staff', 'is_superuser', 'is_active', 'date_joined', 'id')
+        fields = ('id', 'name', 'email', 'username')
+        write_only_fields = ('password', 'first_name', 'last_name')
 
     def create(self, validated_data, request):
         try:
@@ -62,3 +61,17 @@ class UserSerializer(serializers.ModelSerializer):
             return True
         except Exception, e:
             return False
+
+    def update(self, instance, validated_data):
+        instance.email = validated_data.get('email', instance.email)
+        instance.first_name = validated_data.get('first_name', instance.first_name)
+        instance.last_name = validated_data.get('last_name', instance.last_name)
+        instance.username = validated_data.get('username', instance.username)
+        password = validated_data.get('password', None)
+        confirm_password = validated_data.get('confirm_password', None)
+        '''if password and confirm_password and password == confirm_password:
+                instance.set_password(password)
+                instance.save()
+        update_session_auth_hash(self.context.get('request'), instance)'''
+        instance.save()
+        return instance

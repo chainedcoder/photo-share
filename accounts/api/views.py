@@ -68,6 +68,20 @@ def profile(request):
         return Response(RESPONSE, status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(['POST'])
+def edit_profile(request):
+    user = request.user
+    serializer = UserSerializer(user, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.update(user, request.data)
+        RESPONSE['msg'] = 'Profile updated successfully.'
+        return Response(RESPONSE, status=status.HTTP_200_OK)
+    else:
+        RESPONSE['msg'] = 'Error updating profile.'
+        RESPONSE['errors'] = serializer.errors
+        return Response(RESPONSE, status=status.HTTP_400_BAD_REQUEST)
+
+
 class ObtainExpiringAuthToken(ObtainAuthToken):
 
     def post(self, request):

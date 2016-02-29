@@ -118,12 +118,6 @@ def unfollow(request):
 def get_user_friends(request):
     user = request.user
     friends = user.get_user_friends()
-    a = []
-    '''for friend in friends:
-        b = {}
-        b['name'] = friend.get_full_name()
-        b['username'] = friend.username
-        a.append(b)'''
     serializer = UserSerializer(friends, many=True)
     return Response(serializer.data)
 

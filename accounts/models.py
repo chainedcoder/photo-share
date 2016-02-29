@@ -79,6 +79,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     account_verified_date = models.DateTimeField(blank=True, null=True)
     date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
     last_seen = models.DateTimeField(_('last seen'), blank=True, null=True)
+    profile_pic = models.ImageField(upload_to='profile_pics', null=True)
 
     objects = CustomUserManager()
 

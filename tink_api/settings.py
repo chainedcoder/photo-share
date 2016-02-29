@@ -39,8 +39,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts',
     'notifications',
+    'rest_framework',
     'rest_framework.authtoken',
-    'follows'
+    'follows',
+    'photos'
 ]
 
 MIDDLEWARE_CLASSES = [
