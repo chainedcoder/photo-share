@@ -17,6 +17,11 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
+
+    def __init__(self, *args, **kwargs):
+        super(UserSerializer, self).__init__(*args, **kwargs)
+        self.fields['username'].error_messages['unique'] = 'That username already exists.'
+
     name = serializers.CharField(
         source='get_full_name', read_only=True)
 
