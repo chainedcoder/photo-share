@@ -1,3 +1,8 @@
+import os
+import json
+
+from django.contrib.auth import get_user_model
+
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view
@@ -5,6 +10,9 @@ from rest_framework.response import Response
 
 from .serializers import *
 from .models import UploadedPhoto
+
+User = get_user_model
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 @api_view(['POST'])
@@ -15,6 +23,13 @@ def upload_photo(request):
         photo = UploadedPhoto(image=serializer.validated_data['image'], owner=request.user)
         photo.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+def photo_stream(request):
+    with open(BASE_DIR + '/photos/sample.json') as data_file:
+        data = json.load(data_file)
+    return Response(data)
 
 
 class PhotoList(APIView):
