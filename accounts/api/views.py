@@ -5,6 +5,7 @@ from django.core.urlresolvers import reverse
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 
 from rest_framework import status
 from rest_framework.permissions import AllowAny
@@ -15,13 +16,13 @@ from rest_framework.authtoken.models import Token
 
 from .serializers import UserSerializer
 
-RESPONSE = {}
 User = get_user_model()
 
 
 @api_view(['POST'])
 @permission_classes((AllowAny, ))
 def sign_up(request):
+    RESPONSE = {}
     serialized = UserSerializer(data=request.data)
     if serialized.is_valid() and serialized.create(request.data, request):
         RESPONSE['msg'] = 'Account created successfully.'
@@ -32,6 +33,7 @@ def sign_up(request):
 
 @api_view(['POST'])
 def change_password(request):
+    RESPONSE = {}
     user = request.user
     old_pass = request.data['old_password']
     if user.check_password(old_pass):
@@ -39,10 +41,11 @@ def change_password(request):
         user.set_password(new_pass)
         user.save()
         RESPONSE['msg'] = 'Password changed successfully.'
+        status_code = status.HTTP_200_OK
     else:
         RESPONSE['msg'] = 'Invalid password!'
         status_code = status.HTTP_400_BAD_REQUEST
-    return Response(Response, status=status_code)
+    return Response(RESPONSE, status=status_code)
 
 
 @api_view(['GET'])
@@ -54,6 +57,7 @@ def my_profile(request):
 
 @api_view(['GET'])
 def profile(request):
+    RESPONSE = {}
     user_id = request.query_params['user_id']
     try:
         user = User.objects.get(pk=user_id)
@@ -70,16 +74,27 @@ def profile(request):
 
 @api_view(['POST'])
 def edit_profile(request):
+    RESPONSE = {}
     user = request.user
     serializer = UserSerializer(user, data=request.data, partial=True)
     if serializer.is_valid():
         serializer.update(user, request.data)
         RESPONSE['msg'] = 'Profile updated successfully.'
-        return Response(RESPONSE, status=status.HTTP_200_OK)
+        status_code = status.HTTP_200_OK
     else:
         RESPONSE['msg'] = 'Error updating profile.'
         RESPONSE['errors'] = serializer.errors
-        return Response(RESPONSE, status=status.HTTP_400_BAD_REQUEST)
+        status_code = status.HTTP_200_OK
+    return Response(RESPONSE, status=status_code)
+
+
+@api_view(['GET'])
+def search(request):
+    q = request.query_params['query']
+    users = User.objects.filter(Q(first_name__icontains=q) | Q(
+        last_name__icontains=q) | Q(username__icontains=q))
+    serializer = UserSerializer(users, many=True)
+    return Response(serializer.data)
 
 
 class ObtainExpiringAuthToken(ObtainAuthToken):

@@ -17,11 +17,11 @@ from .models import Follow
 from .serializers import *
 
 User = get_user_model()
-RESPONSE = {}
 
 
 @api_view(['POST'])
 def request_follow(request):
+    RESPONSE = {}
     # user performing the action
     request_from = request.user
     try:
@@ -67,6 +67,7 @@ def get_tink_requests(request):
 
 @api_view(['POST'])
 def accept_request(request):
+    RESPONSE = {}
     request_id = request.data['request_id']
     try:
         follow = Follow.objects.get(pk=request_id, status=0)
@@ -84,6 +85,7 @@ def accept_request(request):
 
 @api_view(['POST'])
 def delete_request(request):
+    RESPONSE = {}
     request_id = request.data['request_id']
     try:
         follow = Follow.objects.get(pk=request_id, status=0)
@@ -99,6 +101,7 @@ def delete_request(request):
 
 @api_view(['POST'])
 def unfollow(request):
+    RESPONSE = {}
     request_from = request.user
     request_to = get_object_or_404(User, pk=request.data('user_id'))
     try:

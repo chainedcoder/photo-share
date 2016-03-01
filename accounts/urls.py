@@ -14,4 +14,6 @@ urlpatterns = [
     url(r'my-profile/$', my_profile, name="my-profile"),
     url(r'profile/$', profile, name="profile"),
     url(r'profile/edit/', edit_profile, name="edit-profile"),
+    url(r'change-password/$', change_password, name="change-password"),
+    url(r'search/$', search, name="search"),
 ]

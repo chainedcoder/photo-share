@@ -6,11 +6,10 @@ from rest_framework.response import Response
 from .serializers import *
 from .models import UploadedPhoto
 
-RESPONSE = {}
-
 
 @api_view(['POST'])
 def upload_photo(request):
+    RESPONSE = {}
     serializer = PhotoSerializer(data=request.data)
     if serializer.is_valid():
         photo = UploadedPhoto(image=serializer.validated_data['image'], owner=request.user)
