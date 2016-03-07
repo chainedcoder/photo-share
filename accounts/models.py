@@ -1,5 +1,8 @@
 from __future__ import unicode_literals
 from itertools import chain
+from cStringIO import StringIO
+
+import qrcode
 
 from django.db import models
 
@@ -13,6 +16,9 @@ from django.contrib.auth.models import Group
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
+from django.core.files import File
+from django.core.files.base import ContentFile
 
 from follows.models import Follow
 
@@ -80,6 +86,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
     last_seen = models.DateTimeField(_('last seen'), blank=True, null=True)
     profile_pic = models.ImageField(upload_to='profile_pics', null=True)
+    tink_qrcode = models.ImageField(upload_to='tink_qrcodes', null=True)
+    bio = models.TextField(null=True, blank=True)
 
     objects = CustomUserManager()
 
@@ -134,3 +142,31 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
             return True
         except ObjectDoesNotExist:
             return False
+
+    def post_save_receiver(sender, instance, **kwargs):
+        if not instance.tink_qrcode:
+            # generate their qr code
+            qr = qrcode.QRCode(version=1,
+                               error_correction=qrcode.constants.ERROR_CORRECT_L,
+                               box_size=10,
+                               border=4
+                               )
+            qr_data = str(
+                reverse('follow-qrcode', kwargs={'user_id': instance.pk}))
+            qr.add_data(qr_data)
+            qr.make(fit=True)
+            image = qr.make_image()
+
+            # save image to string buffer
+            image_buffer = StringIO()
+            image.save(image_buffer, format='JPEG')
+            image_buffer.seek(0)
+
+            # Here we use django file storage system to save the image.
+            file_name = 'QR_%s.jpg' % instance.pk
+            file_object = File(image_buffer, file_name)
+            content_file = ContentFile(file_object.read())
+            instance.tink_qrcode.save(file_name, content_file, save=True)
+
+    models.signals.post_save.connect(
+        post_save_receiver, sender=settings.AUTH_USER_MODEL)

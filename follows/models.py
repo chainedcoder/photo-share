@@ -19,6 +19,9 @@ class Follow(models.Model):
     status = models.IntegerField(choices=FOLLOW_STATUS, default=0)
     date_requested = models.DateTimeField(default=timezone.now)
     date_accepted = models.DateTimeField(null=True)
+    # photo feeds, whether to automatically send photos
+    user_1_to_user_2 = models.BooleanField(default=True)
+    user_2_to_user_1 = models.BooleanField(default=True)
 
     class Meta:
         db_table = "follows"

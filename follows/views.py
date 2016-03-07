@@ -57,6 +57,11 @@ def request_follow(request):
     return Response(RESPONSE, status=status_code)
 
 
+@api_view(['POST'])
+def follow_qrcode(request, user_id):
+    return Response({'OK': 'OK'})
+
+
 @api_view(['GET'])
 def get_tink_requests(request):
     user = request.user

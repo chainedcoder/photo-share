@@ -9,4 +9,5 @@ urlpatterns = [
     url(r'get-friends/$', get_user_friends, name="get-friends"),
     url(r'delete-request/$', delete_request, name="delete-request"),
     url(r'unfollow/$', unfollow, name="unfollow"),
+    url(r'follow/qrcode/(?P<user_id>\d+)/$', follow_qrcode, name="follow-qrcode")
 ]

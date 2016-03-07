@@ -11,8 +11,6 @@ from rest_framework import serializers
 from notifications.models import Notification
 from notifications.tasks import send_notifications
 
-from accounts.models import CustomUser
-
 User = get_user_model()
 
 
@@ -44,9 +42,12 @@ class UserSerializer(serializers.ModelSerializer):
             salted = (salt + email).encode('utf8')
             email_verification_key = hashlib.sha1(salted).hexdigest()
             user.email_verification_key = email_verification_key
-            email_verification_key_expires = timezone.now() + datetime.timedelta(14)
+            email_verification_key_expires = timezone.now(
+            ) + datetime.timedelta(14)
             user.email_verification_key_expires = email_verification_key_expires
+
             user.save()
+
             # create notification to verify email
             notification = Notification.objects.create(mode=1)
             notification.recipient = user
@@ -65,8 +66,10 @@ class UserSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         instance.email = validated_data.get('email', instance.email)
-        instance.first_name = validated_data.get('first_name', instance.first_name)
-        instance.last_name = validated_data.get('last_name', instance.last_name)
+        instance.first_name = validated_data.get(
+            'first_name', instance.first_name)
+        instance.last_name = validated_data.get(
+            'last_name', instance.last_name)
         instance.username = validated_data.get('username', instance.username)
         password = validated_data.get('password', None)
         confirm_password = validated_data.get('confirm_password', None)
