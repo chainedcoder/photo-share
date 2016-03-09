@@ -99,9 +99,8 @@ def search(request):
 
 class ObtainExpiringAuthToken(ObtainAuthToken):
 
-    self.RESPONSE = {}
-
     def post(self, request):
+        self.RESPONSE = {}
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             token, created = Token.objects.get_or_create(
