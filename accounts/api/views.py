@@ -99,6 +99,8 @@ def search(request):
 
 class ObtainExpiringAuthToken(ObtainAuthToken):
 
+    self.RESPONSE = {}
+
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
@@ -115,7 +117,7 @@ class ObtainExpiringAuthToken(ObtainAuthToken):
             RESPONSE['user'] = {
                 'name': token.user.get_full_name(),
                 'username': token.user.username}
-            return Response(RESPONSE, status=status.HTTP_201_CREATED)
+            return Response(self.RESPONSE, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
