@@ -113,9 +113,14 @@ class ObtainExpiringAuthToken(ObtainAuthToken):
                 token.created = timezone.now()
                 token.save()
             RESPONSE['token'] = token.key
+            user = token.user
+            profile_pic = None
+            if user.profile_pic:
+                profile_pic = user.profile_pic.url
             RESPONSE['user'] = {
-                'name': token.user.get_full_name(),
-                'username': token.user.username}
+                'name': user.get_full_name(),
+                'profile_pic': profile_pic,
+                'username': user.username}
             return Response(RESPONSE, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

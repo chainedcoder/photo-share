@@ -56,7 +56,7 @@ class UserSerializer(serializers.ModelSerializer):
                 'first_name': first_name,
                 'email_verification_key': email_verification_key,
             }
-            notification.subject = 'Confirm your Tink Account'
+            notification.subject = 'Confirm your tink email address'
             notification.content = content.render(d, request)
             notification.save()
             send_notifications.delay()
