@@ -54,6 +54,15 @@ def my_profile(request):
     user = request.user
     serializer = UserSerializer(user)
     RESPONSE['user'] = serializer.data
+    images = [
+        {"url": "http://api.androidhive.info/feed/img/nat.jpg"},
+        {"url": "http://api.androidhive.info/feed/img/time.png"},
+        {"url": "http://api.androidhive.info/feed/img/lincoln.jpg"},
+        {"url": "http://api.androidhive.info/feed/img/discovery.jpg"},
+        {"url": "http://api.androidhive.info/feed/img/lincoln.jpg"},
+        {"url": "http://api.androidhive.info/feed/img/ktm.png"}
+    ]
+    RESPONSE['images'] = images
     return Response(RESPONSE)
 
 
