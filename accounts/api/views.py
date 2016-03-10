@@ -108,6 +108,11 @@ def search(request):
     return Response(serializer.data)
 
 
+@api_view(['GET'])
+def get_qr_code(request):
+    return Response({'qr_code': request.user.tink_qrcode.url})
+
+
 class ObtainExpiringAuthToken(ObtainAuthToken):
 
     def post(self, request):

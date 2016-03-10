@@ -16,4 +16,5 @@ urlpatterns = [
     url(r'profile/edit/', edit_profile, name="edit-profile"),
     url(r'change-password/$', change_password, name="change-password"),
     url(r'search/$', search, name="search"),
+    url(r'get-qr-code/$', get_qr_code, name="get-qr-code"),
 ]
