@@ -120,7 +120,6 @@ class ObtainExpiringAuthToken(ObtainAuthToken):
                 profile_pic = user.profile_pic.url
             RESPONSE['user'] = {
                 'name': user.get_full_name(),
-                'profile_pic': profile_pic,
                 'username': user.username}
             return Response(RESPONSE, status=status.HTTP_201_CREATED)
 
