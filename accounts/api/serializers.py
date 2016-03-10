@@ -18,11 +18,15 @@ class UserSerializer(serializers.ModelSerializer):
 
     name = serializers.CharField(
         source='get_full_name', read_only=True)
+    profile_pic_url = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ('id', 'name', 'username')
+        fields = ('id', 'name', 'username', 'profile_pic_url')
         write_only_fields = ('password', 'first_name', 'last_name')
+
+    def get_profile_pic_url(self, obj):
+        return obj.get_profile_pic()
 
     def create(self, validated_data, request):
         try:

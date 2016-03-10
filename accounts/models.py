@@ -114,6 +114,15 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         full_name = '%s %s' % (self.first_name, self.last_name)
         return full_name.strip()
 
+    def get_profile_pic(self):
+        """
+        Returns user profile pic or default one
+        """
+        if not self.profile_pic:
+            return "https://thesocietypages.org/socimages/files/2009/05/nopic_192.gif"
+        else:
+            return self.profile_pic.url
+
     def get_short_name(self):
         "Returns the short name for the user."
         return self.first_name

@@ -51,6 +51,7 @@ def change_password(request):
 @api_view(['GET'])
 def my_profile(request):
     user = request.user
+    print user.get_profile_pic()
     serializer = UserSerializer(user)
     return Response(serializer.data)
 
