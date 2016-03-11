@@ -90,6 +90,7 @@ def edit_profile(request):
     if request.method == 'GET':
         serializer = UserSerializer(user)
         a = serializer.data
+        a['email'] = user.email
         a['bio'] = user.bio
         a['website'] = user.website
         a['birthday'] = user.birthday
