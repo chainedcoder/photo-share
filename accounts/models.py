@@ -88,6 +88,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     profile_pic = models.ImageField(upload_to='profile_pics', null=True)
     tink_qrcode = models.ImageField(upload_to='tink_qrcodes', null=True)
     bio = models.TextField(null=True, blank=True)
+    birthday = models.DateField(null=True)
+    website = models.URLField(null=True)
 
     objects = CustomUserManager()
 

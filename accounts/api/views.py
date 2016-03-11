@@ -83,20 +83,28 @@ def profile(request):
         return Response(RESPONSE, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST'])
+@api_view(['POST', 'GET'])
 def edit_profile(request):
     RESPONSE = {}
     user = request.user
-    serializer = UserSerializer(user, data=request.data, partial=True)
-    if serializer.is_valid():
-        serializer.update(user, request.data)
-        RESPONSE['msg'] = 'Profile updated successfully.'
-        status_code = status.HTTP_200_OK
+    if request.method == 'GET':
+        serializer = UserSerializer(user)
+        a = serializer.data
+        a['bio'] = user.bio
+        a['website'] = user.website
+        a['birthday'] = user.birthday
+        return Response(a)
     else:
-        RESPONSE['msg'] = 'Error updating profile.'
-        RESPONSE['errors'] = serializer.errors
-        status_code = status.HTTP_200_OK
-    return Response(RESPONSE, status=status_code)
+        serializer = UserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.update(user, request.data)
+            RESPONSE['msg'] = 'Profile updated successfully.'
+            status_code = status.HTTP_200_OK
+        else:
+            RESPONSE['msg'] = 'Error updating profile.'
+            RESPONSE['errors'] = serializer.errors
+            status_code = status.HTTP_200_OK
+        return Response(RESPONSE, status=status_code)
 
 
 @api_view(['GET'])
