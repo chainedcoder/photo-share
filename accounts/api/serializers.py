@@ -22,7 +22,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'name', 'username', 'profile_pic_url')
+        fields = ('id', 'name', 'username', 'profile_pic_url', 'website')
         write_only_fields = ('password', 'first_name', 'last_name')
 
     def get_profile_pic_url(self, obj):
@@ -74,12 +74,19 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name', instance.first_name)
         instance.last_name = validated_data.get(
             'last_name', instance.last_name)
-        instance.username = validated_data.get('username', instance.username)
-        password = validated_data.get('password', None)
-        confirm_password = validated_data.get('confirm_password', None)
-        '''if password and confirm_password and password == confirm_password:
-                instance.set_password(password)
-                instance.save()
-        update_session_auth_hash(self.context.get('request'), instance)'''
+        instance.bio = validated_data.get('bio', instance.bio)
+        instance.website = validated_data.get('website', instance.website)
+        bday = validated_data.get('birthday')
+        if bday is not None:
+            bday_date = datetime.datetime.strptime(bday, "%Y-%m-%d")
+            instance.birthday = bday_date
         instance.save()
         return instance
+
+    def update_password(self, instance, validated_data):
+        password = validated_data.get('password')
+        confirm_password = validated_data.get('confirm_password')
+        if password and confirm_password and password == confirm_password:
+                instance.set_password(password)
+                instance.save()
+        update_session_auth_hash(self.context.get('request'), instance)
