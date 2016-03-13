@@ -69,6 +69,7 @@ class UserSerializer(serializers.ModelSerializer):
             return False
 
     def update(self, instance, validated_data):
+        instance.profile_pic = validated_data.get('profile_pic', instance.profile_pic)
         instance.email = validated_data.get('email', instance.email)
         instance.first_name = validated_data.get(
             'first_name', instance.first_name)
@@ -82,11 +83,3 @@ class UserSerializer(serializers.ModelSerializer):
             instance.birthday = bday_date
         instance.save()
         return instance
-
-    def update_password(self, instance, validated_data):
-        password = validated_data.get('password')
-        confirm_password = validated_data.get('confirm_password')
-        if password and confirm_password and password == confirm_password:
-                instance.set_password(password)
-                instance.save()
-        update_session_auth_hash(self.context.get('request'), instance)

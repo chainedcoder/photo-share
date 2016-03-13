@@ -40,6 +40,7 @@ def change_password(request):
         new_pass = request.data['new_password']
         user.set_password(new_pass)
         user.save()
+        # update_session_auth_hash(self.context.get('request'), user)
         RESPONSE['msg'] = 'Password changed successfully.'
         status_code = status.HTTP_200_OK
     else:
