@@ -1,10 +1,12 @@
 import hashlib
 import datetime
 import random
+from base64 import b64decode
 
 from django.contrib.auth import get_user_model
 from django.template.loader import get_template
 from django.utils import timezone
+from django.core.files.base import ContentFile
 
 from rest_framework import serializers
 
@@ -69,7 +71,6 @@ class UserSerializer(serializers.ModelSerializer):
             return False
 
     def update(self, instance, validated_data):
-        instance.profile_pic = validated_data.get('profile_pic', instance.profile_pic)
         instance.email = validated_data.get('email', instance.email)
         instance.first_name = validated_data.get(
             'first_name', instance.first_name)
@@ -81,5 +82,10 @@ class UserSerializer(serializers.ModelSerializer):
         if bday is not None:
             bday_date = datetime.datetime.strptime(bday, "%Y-%m-%d")
             instance.birthday = bday_date
+        profile_pic = validated_data.get('profile_pic')
+        if profile_pic is not None:
+            file_name = 'ppic_%s.png' % instance.pk
+            image_data = b64decode(profile_pic)
+            instance.profile_pic = ContentFile(image_data, file_name)
         instance.save()
         return instance
