@@ -84,7 +84,7 @@ class UserSerializer(serializers.ModelSerializer):
             instance.birthday = bday_date
         profile_pic = validated_data.get('profile_pic')
         if profile_pic is not None:
-            file_name = 'ppic_%s.png' % instance.pk
+            file_name = 'ppic_%s.jpg' % instance.pk
             image_data = b64decode(profile_pic)
             instance.profile_pic = ContentFile(image_data, file_name)
         instance.save()
