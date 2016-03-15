@@ -32,7 +32,7 @@ def request_follow(request):
         else:
             try:
                 Follow.objects.get(Q(user_1=request_from, user_2=request_to) | Q(
-                    user_1=request_from, user_2=request_to))
+                    user_1=request_to, user_2=request_from))
                 RESPONSE['msg'] = 'You are already tinked with this person!'
                 status_code = status.HTTP_400_BAD_REQUEST
             except ObjectDoesNotExist:
@@ -59,7 +59,27 @@ def request_follow(request):
 
 @api_view(['POST'])
 def follow_qrcode(request, user_id):
-    return Response({'OK': 'OK'})
+    RESPONSE = {}
+    scanner = request.user
+    scanee = User.objects.get(pk=user_id)
+    if scanner == scanee:
+        RESPONSE['msg'] = "Could not complete action."
+        RESPONSE['status_code'] = 1
+    else:
+        try:
+            follow = Follow.objects.get(Q(user_1=scanner, user_2=scanee) | Q(
+                user_1=scanee, user_2=scanner))
+            RESPONSE['msg'] = 'You are already tinked with this person!'
+            if not follow.date_accepted:
+                RESPONSE['msg'] = 'A tink request is pending confirmation.'
+            RESPONSE['status_code'] = 1
+        except ObjectDoesNotExist:
+            follow = Follow(user_1=scanner, user_2=scanee, status=1,
+                            date_accepted=timezone.now())
+            follow.save()
+            RESPONSE['msg'] = 'Successfully tinked with {0}'.format(scanee.get_full_name())
+            RESPONSE['status_code'] = 0
+    return Response(RESPONSE)
 
 
 @api_view(['GET'])
