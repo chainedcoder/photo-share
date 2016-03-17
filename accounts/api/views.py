@@ -26,8 +26,11 @@ def sign_up(request):
     serialized = UserSerializer(data=request.data)
     if serialized.is_valid() and serialized.create(request.data, request):
         RESPONSE['msg'] = 'Account created successfully.'
+        RESPONSE['status_code'] = 0
         return Response(RESPONSE, status=status.HTTP_201_CREATED)
     else:
+        RESPONSE['status_code'] = 1
+        RESPONSE['msg'] = 'Something went wrong.'
         return Response(serialized._errors, status=status.HTTP_400_BAD_REQUEST)
 
 

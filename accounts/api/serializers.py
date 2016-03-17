@@ -24,7 +24,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'name', 'username', 'profile_pic_url', 'website')
+        fields = (
+            'id', 'name', 'username', 'profile_pic_url', 'website', 'bio')
         write_only_fields = ('password', 'first_name', 'last_name')
 
     def get_profile_pic_url(self, obj):
@@ -32,14 +33,25 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data, request):
         try:
-            first_name = validated_data['first_name']
-            last_name = validated_data['last_name']
+            first_name = validated_data.get('first_name')
+            last_name = validated_data.get('last_name')
             email = validated_data['email']
+            bio = validated_data.get('bio')
+            facebook_id = validated_data.get('facebook_id')
+            birthday = validated_data.get('birthday')
+            if birthday is not None:
+                bday_date_str = datetime.datetime.strptime(
+                    bday, "%m-%d-%Y").strftime("%Y-%m-%d")
+                bday_date = datetime.datetime.strptime(
+                    bday_date_str, "%Y-%m-%d")
             user = User.objects.create(
                 username=validated_data['username'],
                 email=email,
                 first_name=first_name,
-                last_name=last_name
+                last_name=last_name,
+                bio=bio,
+                facebook_id=facebook_id,
+                birthday=bday_date
             )
             user.set_password(validated_data['password'])
             # Generate a unique activation link and save
