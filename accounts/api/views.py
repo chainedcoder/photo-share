@@ -32,6 +32,16 @@ def sign_up(request):
 
 
 @api_view(['POST'])
+@permission_classes((AllowAny, ))
+def check_fb_user_registered(request):
+    try:
+        User.objects.get(facebook_id=request.data['facebook_id'])
+        return Response({'is_registered': True})
+    except ObjectDoesNotExist:
+        return Response({'is_registered': False})
+
+
+@api_view(['POST'])
 def change_password(request):
     RESPONSE = {}
     user = request.user
@@ -42,9 +52,11 @@ def change_password(request):
         user.save()
         # update_session_auth_hash(self.context.get('request'), user)
         RESPONSE['msg'] = 'Password changed successfully.'
+        RESPONSE['status_code'] = 0
         status_code = status.HTTP_200_OK
     else:
         RESPONSE['msg'] = 'Invalid password!'
+        RESPONSE['status_code'] = 1
         status_code = status.HTTP_400_BAD_REQUEST
     return Response(RESPONSE, status=status_code)
 

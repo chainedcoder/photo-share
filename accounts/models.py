@@ -90,6 +90,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     bio = models.TextField(null=True, blank=True)
     birthday = models.DateField(null=True)
     website = models.URLField(null=True)
+    facebook_id = models.CharField(max_length=100, null=True)
 
     objects = CustomUserManager()
 

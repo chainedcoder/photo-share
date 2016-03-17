@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
+    'social.apps.django_app.default',
     'accounts',
     'notifications',
     'rest_framework',
@@ -97,7 +98,9 @@ DATABASES = {
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
 # Custom authentication backend using email and password
-AUTHENTICATION_BACKENDS = ('tink_api.backends.EmailAuthBackend', )
+AUTHENTICATION_BACKENDS = ('social.backends.facebook.FacebookOAuth2',
+                           'social.backends.google.GoogleOAuth2',
+                           'tink_api.backends.EmailAuthBackend', )
 
 # Email settings
 EMAIL_HOST = 'smtp.mandrillapp.com'

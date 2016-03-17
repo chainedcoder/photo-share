@@ -7,6 +7,8 @@ from .api.views import *
 
 urlpatterns = [
     url(r'sign-up/$', sign_up, name="sign-up"),
+    url(r'check-fb-user-registered/$', check_fb_user_registered,
+        name="check-fb-user-registered"),
     url(r'verify-email/(?P<email_verification_key>\w+)/$',
         verify_email, name="verify-email"),
     # url(r'sign-in/', drf_views.obtain_auth_token),

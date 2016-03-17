@@ -1,5 +1,6 @@
 Django==1.9.2
 Pillow==3.1.0
+PyJWT==1.4.0
 amqp==1.4.9
 anyjson==0.3.3
 argparse==1.2.1
@@ -10,10 +11,14 @@ djangorestframework==3.3.2
 djrill==2.0
 gunicorn==19.4.5
 kombu==3.0.33
+oauthlib==1.0.3
 psycopg2==2.6.1
 pylibmc==1.5.0
+python-openid==2.2.5
+python-social-auth==0.2.14
 pytz==2015.7
 qrcode==5.2.2
 requests==2.9.1
+requests-oauthlib==0.6.1
 six==1.10.0
 wsgiref==0.1.2
