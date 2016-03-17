@@ -41,7 +41,7 @@ class UserSerializer(serializers.ModelSerializer):
             birthday = validated_data.get('birthday')
             if birthday is not None:
                 bday_date_str = datetime.datetime.strptime(
-                    bday, "%m-%d-%Y").strftime("%Y-%m-%d")
+                    birthday, "%m/%d/%Y").strftime("%Y-%m-%d")
                 bday_date = datetime.datetime.strptime(
                     bday_date_str, "%Y-%m-%d")
             user = User.objects.create(
@@ -80,6 +80,7 @@ class UserSerializer(serializers.ModelSerializer):
             send_notifications.delay()
             return True
         except Exception, e:
+            print e
             return False
 
     def update(self, instance, validated_data):

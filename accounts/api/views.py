@@ -31,7 +31,8 @@ def sign_up(request):
     else:
         RESPONSE['status_code'] = 1
         RESPONSE['msg'] = 'Something went wrong.'
-        return Response(serialized._errors, status=status.HTTP_400_BAD_REQUEST)
+        RESPONSE['errors'] = serialized._errors
+        return Response(RESPONSE, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
