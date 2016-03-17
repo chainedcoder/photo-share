@@ -27,12 +27,12 @@ def sign_up(request):
     if serialized.is_valid() and serialized.create(request.data, request):
         RESPONSE['msg'] = 'Account created successfully.'
         RESPONSE['status_code'] = 0
-        return Response(RESPONSE, status=status.HTTP_201_CREATED)
+        return Response(RESPONSE)
     else:
         RESPONSE['status_code'] = 1
         RESPONSE['msg'] = 'Something went wrong.'
         RESPONSE['errors'] = serialized._errors
-        return Response(RESPONSE, status=status.HTTP_400_BAD_REQUEST)
+        return Response(RESPONSE)
 
 
 @api_view(['POST'])
