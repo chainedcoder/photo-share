@@ -44,6 +44,8 @@ class UserSerializer(serializers.ModelSerializer):
                     birthday, "%m/%d/%Y").strftime("%Y-%m-%d")
                 bday_date = datetime.datetime.strptime(
                     bday_date_str, "%Y-%m-%d")
+            else:
+                bday_date = None
             user = User.objects.create(
                 username=validated_data['username'],
                 email=email,
