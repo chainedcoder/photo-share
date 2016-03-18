@@ -25,7 +25,8 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'id', 'name', 'username', 'profile_pic_url', 'website', 'bio')
+            'id', 'name', 'email', 'username', 'profile_pic_url',
+            'website', 'bio')
         write_only_fields = ('password', 'first_name', 'last_name')
 
     def get_profile_pic_url(self, obj):
