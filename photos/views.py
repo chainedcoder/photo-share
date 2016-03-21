@@ -5,7 +5,8 @@ from django.contrib.auth import get_user_model
 
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from .serializers import *
@@ -27,6 +28,7 @@ def upload_photo(request):
 
 
 @api_view(['GET'])
+@permission_classes((AllowAny, ))
 def photo_stream(request):
     with open(BASE_DIR + '/photos/sample.json') as data_file:
         data = json.load(data_file)
