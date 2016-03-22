@@ -7,3 +7,5 @@ sudo apt-get install memcached libmemcached-dev
 sudo apt-get install supervisor
 sudo apt-get install libjpeg-dev
 sudo apt-get install rabbitmq-server
+sudo apt-get install libblas-dev liblapack-dev libatlas-base-dev gfortran
+sudo apt-get install libboost-python-dev cmake
