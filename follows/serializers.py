@@ -30,7 +30,9 @@ class FriendSerializer(serializers.HyperlinkedModelSerializer):
         source='user.username', read_only=True)
     name = serializers.CharField(
         source='user.get_full_name', read_only=True)
+    user_id = serializers.CharField(
+        source='user.pk', read_only=True)
 
     class Meta:
         model = Follow
-        fields = ('username', 'name')
+        fields = ('user_id', 'username', 'name')

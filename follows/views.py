@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
@@ -6,13 +8,15 @@ from django.utils import timezone
 from django.db.models import Q
 
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from notifications.models import Notification
 from notifications.tasks import send_notifications
 from accounts.api.serializers import UserSerializer
 
+from tink_api.settings import BASE_DIR
 from .models import Follow
 from .serializers import *
 
@@ -143,11 +147,15 @@ def unfollow(request):
 
 
 @api_view(['GET'])
+@permission_classes((AllowAny, ))
 def get_user_friends(request):
-    user = request.user
+    '''user = request.user
     friends = user.get_user_friends()
     serializer = UserSerializer(friends, many=True)
-    return Response(serializer.data)
+    return Response(serializer.data)'''
+    with open(BASE_DIR + '/follows/sample_friends.json') as data_file:
+        data = json.load(data_file)
+    return Response(data)
 
 
 @api_view(['POST'])

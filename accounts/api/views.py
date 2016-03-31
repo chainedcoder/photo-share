@@ -93,14 +93,6 @@ def profile(request):
         serializer = UserSerializer(user)
         RESPONSE['user'] = serializer.data
         RESPONSE['is_friend'] = request.user.are_friends(user)
-        '''RESPONSE['images'] = [
-            {"url": "http://api.androidhive.info/feed/img/nat.jpg"},
-            {"url": "http://api.androidhive.info/feed/img/time.png"},
-            {"url": "http://api.androidhive.info/feed/img/lincoln.jpg"},
-            {"url": "http://api.androidhive.info/feed/img/discovery.jpg"},
-            {"url": "http://api.androidhive.info/feed/img/lincoln.jpg"},
-            {"url": "http://api.androidhive.info/feed/img/ktm.png"}
-        ]'''
         RESPONSE['status_code'] = 0
         return Response(RESPONSE, status=status.HTTP_200_OK)
     except ObjectDoesNotExist:
