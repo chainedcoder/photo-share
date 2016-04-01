@@ -35,6 +35,14 @@ def photo_stream(request):
     return Response(data)
 
 
+@api_view(['GET'])
+@permission_classes((AllowAny, ))
+def sample_photos(request):
+    with open(BASE_DIR + '/photos/sample_photos.json') as data_file:
+        data = json.load(data_file)
+    return Response(data)
+
+
 class PhotoList(APIView):
 
     def get(self, request, format=None):
