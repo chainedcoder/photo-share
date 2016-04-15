@@ -51,6 +51,14 @@ def sample_outbox_pending(request):
     return Response(data)
 
 
+@api_view(['GET'])
+@permission_classes((AllowAny, ))
+def sample_outbox_sent(request):
+    with open(BASE_DIR + '/photos/sample_sent_outbox.json') as data_file:
+        data = json.load(data_file)
+    return Response(data)
+
+
 class PhotoList(APIView):
 
     def get(self, request, format=None):
