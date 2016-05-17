@@ -45,6 +45,16 @@ def check_fb_user_registered(request):
 
 
 @api_view(['POST'])
+@permission_classes((AllowAny, ))
+def check_google_user_registered(request):
+    try:
+        User.objects.get(google_id=request.data['google_id'])
+        return Response({'is_registered': True})
+    except ObjectDoesNotExist:
+        return Response({'is_registered': False})
+
+
+@api_view(['POST'])
 def change_password(request):
     RESPONSE = {}
     user = request.user
@@ -148,13 +158,13 @@ class ObtainExpiringAuthToken(ObtainAuthToken):
         if serializer.is_valid():
             token, created = Token.objects.get_or_create(
                 user=serializer.validated_data['user'])
-            date_time = timezone.now()
+            '''date_time = timezone.now()
             if not created and token.created < date_time - datetime.timedelta(hours=1):
                 token.delete()
                 token = Token.objects.create(
                     user=serializer.validated_data['user'])
                 token.created = timezone.now()
-                token.save()
+                token.save()'''
             RESPONSE['token'] = token.key
             user = token.user
             profile_pic = None

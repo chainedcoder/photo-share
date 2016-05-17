@@ -2,11 +2,14 @@ import hashlib
 import datetime
 import random
 from base64 import b64decode
+import requests
 
 from django.contrib.auth import get_user_model
 from django.template.loader import get_template
 from django.utils import timezone
 from django.core.files.base import ContentFile
+from django.core.files import File
+from django.core.files.temp import NamedTemporaryFile
 
 from rest_framework import serializers
 
@@ -39,7 +42,15 @@ class UserSerializer(serializers.ModelSerializer):
             email = validated_data['email']
             bio = validated_data.get('bio')
             facebook_id = validated_data.get('facebook_id')
+            google_id = validated_data.get('google_id')
             birthday = validated_data.get('birthday')
+            profile_pic_url = validated_data.get('profile_pic_url')
+            username = validated_data.get('username')
+            if profile_pic_url:
+                r = requests.get(profile_pic_url)
+                img_temp = NamedTemporaryFile(delete=True)
+                img_temp.write(r.content)
+                img_temp.flush()
             if birthday is not None:
                 bday_date_str = datetime.datetime.strptime(
                     birthday, "%m/%d/%Y").strftime("%Y-%m-%d")
@@ -48,13 +59,15 @@ class UserSerializer(serializers.ModelSerializer):
             else:
                 bday_date = None
             user = User.objects.create(
-                username=validated_data['username'],
+                username=username,
                 email=email,
                 first_name=first_name,
                 last_name=last_name,
                 bio=bio,
                 facebook_id=facebook_id,
-                birthday=bday_date
+                google_id=google_id,
+                birthday=bday_date,
+                profile_pic=File(img_temp)
             )
             user.set_password(validated_data['password'])
             # Generate a unique activation link and save
