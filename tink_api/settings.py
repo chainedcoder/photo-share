@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.9/ref/settings/
 """
 
 import os
+import redis
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -23,9 +24,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'xu3quoh&wyyfs(h(wci!d@zs6ygfswrqh@(t+#@73+2a**%!@^'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ADMINS = (
+    ('Denny', 'dennis@redpulse.co.ke'),
+)
+
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -38,7 +43,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
-    'social.apps.django_app.default',
     'accounts',
     'notifications',
     'rest_framework',
@@ -98,20 +102,16 @@ DATABASES = {
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
 # Custom authentication backend using email and password
-AUTHENTICATION_BACKENDS = ('social.backends.facebook.FacebookOAuth2',
-                           'social.backends.google.GoogleOAuth2',
-                           'tink_api.backends.EmailAuthBackend', )
+AUTHENTICATION_BACKENDS = ('tink_api.backends.EmailAuthBackend', )
 
 # Email settings
-EMAIL_HOST = 'smtp.mandrillapp.com'
-EMAIL_HOST_USER = 'hello@redpulse.co.ke'
-EMAIL_HOST_PASSWORD = 'J2dqGXk2BInJcASgqKC4bQ'
+EMAIL_HOST = 'smtp.sendgrid.net'
+EMAIL_HOST_USER = 'redpulse'
+EMAIL_HOST_PASSWORD = 'redpulse2016'
 SERVER_EMAIL = 'hello@redpulse.co.ke'
-DEFAULT_FROM_EMAIL = 'Tink <no-reply@tink.co.ke>'
+DEFAULT_FROM_EMAIL = 'Tink <no-reply@tink.com>'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-MANDRILL_API_KEY = "J2dqGXk2BInJcASgqKC4bQ"
-EMAIL_BACKEND = "djrill.mail.backends.djrill.DjrillBackend"
 EMAIL_DEBUG = True
 
 # Cache
@@ -123,26 +123,6 @@ CACHES = {
 }
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-
-
-# Password validation
-# https://docs.djangoproject.com/en/1.9/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.9/topics/i18n/
@@ -167,6 +147,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+MEDIA_FOLDER_NAME = 'media'
+
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
 # Examples: "http://example.com/media/", "http://media.example.com/"
@@ -177,8 +159,8 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-        # 'rest_framework.authentication.TokenAuthentication',
-        'accounts.authentication.ExpiringTokenAuthentication'
+        'rest_framework.authentication.TokenAuthentication',
+        # 'accounts.authentication.ExpiringTokenAuthentication'
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -186,3 +168,11 @@ REST_FRAMEWORK = {
 }
 
 AUTH_TOKEN_EXPIRE_HOURS = 1
+
+REDIS_CONFIG = {
+    'host': 'localhost',
+    'port': 6379,
+    'db': 0
+}
+
+r = redis.StrictRedis(**REDIS_CONFIG)

@@ -1,4 +1,5 @@
-import datetime
+from io import FileIO, BufferedWriter
+import json
 
 from django.shortcuts import redirect
 from django.core.urlresolvers import reverse
@@ -6,6 +7,7 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
+from django.core.files.temp import NamedTemporaryFile
 
 from rest_framework import status
 from rest_framework.permissions import AllowAny
@@ -13,8 +15,13 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
+from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
 
-from .serializers import UserSerializer
+from tink_api.settings import r
+
+from accounts.models import ProfileVideo
+from .serializers import UserSerializer, VideoUploadSerializer
 
 User = get_user_model()
 
@@ -22,16 +29,47 @@ User = get_user_model()
 @api_view(['POST'])
 @permission_classes((AllowAny, ))
 def sign_up(request):
-    RESPONSE = {}
+    response = dict()
     serialized = UserSerializer(data=request.data)
-    if serialized.is_valid() and serialized.create(request.data, request):
-        RESPONSE['msg'] = 'Account created successfully.'
-        RESPONSE['status_code'] = 0
+    if serialized.is_valid() and serialized.create(request.data):
+        response['msg'] = 'Account created successfully.'
+        response['status_code'] = 0
     else:
-        RESPONSE['status_code'] = 1
-        RESPONSE['msg'] = 'Something went wrong.'
-        RESPONSE['errors'] = serialized._errors
-    return Response(RESPONSE)
+        response['status_code'] = 1
+        response['msg'] = 'Something went wrong.'
+        response['errors'] = serialized._errors
+    return Response(response)
+
+
+class VideoUpload(APIView):
+    serializer_class = VideoUploadSerializer
+    # permission_classes = (AllowAny, )
+    parser_classes = (MultiPartParser, FormParser, )
+
+    def post(self, request, format=None):
+        upload = request.data['video_file']
+        fh = NamedTemporaryFile(delete=False)
+
+        extension = upload.name.split(".")[1]
+        filename = "{}.{}".format(fh.name, extension)
+
+        with BufferedWriter(FileIO(filename, "w")) as dest:
+            for c in upload.chunks():
+                dest.write(c)
+
+        profile_video = ProfileVideo.objects.create(
+            user=request.user,
+            video_file=filename)
+
+        pub_msg = {
+            "task_type": 1,
+            "username": request.user.username,
+            "video_path": profile_video.video_file.url
+        }
+
+        r.publish('recognition_tasks', json.dumps(pub_msg))
+
+        return Response({}, status=201)
 
 
 @api_view(['POST'])
@@ -111,29 +149,20 @@ def profile(request):
         return Response(RESPONSE, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST', 'GET'])
-def edit_profile(request):
-    RESPONSE = {}
+@api_view(['POST'])
+def update_profile(request):
+    response = {}
     user = request.user
-    if request.method == 'GET':
-        serializer = UserSerializer(user)
-        a = serializer.data
-        a['email'] = user.email
-        a['bio'] = user.bio
-        a['website'] = user.website
-        a['birthday'] = user.birthday
-        return Response(a)
+    serializer = UserSerializer(user, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.update(user, request.data)
+        response['msg'] = 'Profile updated successfully.'
+        response['status_code'] = 0
     else:
-        serializer = UserSerializer(user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.update(user, request.data)
-            RESPONSE['msg'] = 'Profile updated successfully.'
-            status_code = status.HTTP_200_OK
-        else:
-            RESPONSE['msg'] = 'Error updating profile.'
-            RESPONSE['errors'] = serializer.errors
-            status_code = status.HTTP_200_OK
-        return Response(RESPONSE, status=status_code)
+        response['msg'] = 'Error updating profile.'
+        response['errors'] = serializer.errors
+        response['status_code'] = 1
+    return Response(response)
 
 
 @api_view(['GET'])
@@ -167,9 +196,6 @@ class ObtainExpiringAuthToken(ObtainAuthToken):
                 token.save()'''
             RESPONSE['token'] = token.key
             user = token.user
-            profile_pic = None
-            if user.profile_pic:
-                profile_pic = user.profile_pic.url
             RESPONSE['user'] = {
                 'name': user.get_full_name(),
                 'username': user.username}

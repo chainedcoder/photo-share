@@ -1,22 +1,12 @@
 from django.conf.urls import url
 
-from rest_framework.authtoken import views as drf_views
-
-from .views import *
-from .api.views import *
+from .api.views import (sign_up, obtain_expiring_auth_token, search, VideoUpload,
+                        update_profile)
 
 urlpatterns = [
     url(r'sign-up/$', sign_up, name="sign-up"),
-    url(r'check-fb-user-registered/$', check_fb_user_registered,
-        name="check-fb-user-registered"),
-    url(r'verify-email/(?P<email_verification_key>\w+)/$',
-        verify_email, name="verify-email"),
-    # url(r'sign-in/', drf_views.obtain_auth_token),
     url(r'sign-in/$', obtain_expiring_auth_token),
-    url(r'my-profile/$', my_profile, name="my-profile"),
-    url(r'profile/$', profile, name="profile"),
-    url(r'profile/edit/$', edit_profile, name="edit-profile"),
-    url(r'change-password/$', change_password, name="change-password"),
-    url(r'search/$', search, name="search"),
-    url(r'get-qr-code/$', get_qr_code, name="get-qr-code"),
+    url(r'upload-video/', VideoUpload.as_view(), name='upload-video'),
+    url(r'update-profile/', update_profile, name='update-profile'),
+    url(r'search/', search, name='search'),
 ]

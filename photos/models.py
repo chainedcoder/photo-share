@@ -5,7 +5,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.conf import settings
 
-BASE_UPLOAD_PATH = 'user_photos'
+BASE_UPLOAD_PATH = 'uploads/user_photos'
 
 
 class UploadedPhoto(models.Model):
@@ -15,8 +15,8 @@ class UploadedPhoto(models.Model):
 
     class Meta:
         db_table = 'uploaded_photos'
-        verbose_name = "UploadedPhoto"
-        verbose_name_plural = "UploadedPhotos"
+        verbose_name = "Uploaded Photo"
+        verbose_name_plural = "Uploaded Photos"
         default_permissions = ()
 
     def __unicode__(self):

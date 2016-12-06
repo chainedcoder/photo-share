@@ -31,7 +31,7 @@ class Notification(models.Model):
     status = models.IntegerField(default=0, choices=STATUS)
     timestamp = models.DateTimeField(default=timezone.now)
 
-    def __str__(self):
+    def __unicode__(self):
         return self.subject
 
     class Meta:

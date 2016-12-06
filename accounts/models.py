@@ -22,6 +22,11 @@ from django.core.files.base import ContentFile
 
 from follows.models import Follow
 
+USER_VIDEO_STATUS = (
+    (0, 'Pending'),
+    (1, 'Processed')
+)
+
 
 class CustomUserManager(BaseUserManager):
 
@@ -89,9 +94,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     tink_qrcode = models.ImageField(upload_to='tink_qrcodes', null=True)
     bio = models.TextField(null=True, blank=True)
     birthday = models.DateField(null=True)
-    website = models.URLField(null=True)
-    facebook_id = models.CharField(max_length=100, null=True)
-    google_id = models.CharField(max_length=100, null=True)
 
     objects = CustomUserManager()
 
@@ -183,3 +185,14 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     models.signals.post_save.connect(
         post_save_receiver, sender=settings.AUTH_USER_MODEL)
+
+
+class ProfileVideo(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    video_file = models.FileField(upload_to='user_videos')
+    date_uploaded = models.DateTimeField(default=timezone.now)
+    status = models.IntegerField(choices=USER_VIDEO_STATUS, default=0)
+
+    class Meta:
+        db_table = 'user_videos'
+        default_permissions = ()
