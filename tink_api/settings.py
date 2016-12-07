@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/1.9/ref/settings/
 
 import os
 import redis
+import datetime
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -101,9 +102,6 @@ DATABASES = {
 # Custom user model
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
-# Custom authentication backend using email and password
-AUTHENTICATION_BACKENDS = ('tink_api.backends.EmailAuthBackend', )
-
 # Email settings
 EMAIL_HOST = 'smtp.sendgrid.net'
 EMAIL_HOST_USER = 'redpulse'
@@ -159,15 +157,18 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
-        # 'accounts.authentication.ExpiringTokenAuthentication'
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     )
 }
 
-AUTH_TOKEN_EXPIRE_HOURS = 1
+# JWT
+JWT_AUTH = {
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=365),
+    'JWT_RESPONSE_PAYLOAD_HANDLER': 'accounts.api.views.jwt_response_payload_handler'
+}
 
 REDIS_CONFIG = {
     'host': 'localhost',

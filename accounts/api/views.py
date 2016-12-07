@@ -13,10 +13,9 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework_jwt.settings import api_settings
 
 from tink_api.settings import r
 
@@ -31,7 +30,16 @@ User = get_user_model()
 def sign_up(request):
     response = dict()
     serialized = UserSerializer(data=request.data)
-    if serialized.is_valid() and serialized.create(request.data):
+    if serialized.is_valid():
+        user = serialized.create(request.data)
+        # log in user
+        jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+        jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+
+        payload = jwt_payload_handler(user)
+        token = jwt_encode_handler(payload)
+
+        response['token'] = token
         response['msg'] = 'Account created successfully.'
         response['status_code'] = 0
     else:
@@ -41,9 +49,15 @@ def sign_up(request):
     return Response(response)
 
 
+def jwt_response_payload_handler(token, user=None, request=None):
+    return {
+        'token': token,
+        'user': UserSerializer(user, context={'request': request}).data
+    }
+
+
 class VideoUpload(APIView):
     serializer_class = VideoUploadSerializer
-    # permission_classes = (AllowAny, )
     parser_classes = (MultiPartParser, FormParser, )
 
     def post(self, request, format=None):
@@ -178,29 +192,3 @@ def search(request):
 def get_qr_code(request):
     return Response({'qr_code': request.user.tink_qrcode.url})
 
-
-class ObtainExpiringAuthToken(ObtainAuthToken):
-
-    def post(self, request):
-        RESPONSE = {}
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            token, created = Token.objects.get_or_create(
-                user=serializer.validated_data['user'])
-            '''date_time = timezone.now()
-            if not created and token.created < date_time - datetime.timedelta(hours=1):
-                token.delete()
-                token = Token.objects.create(
-                    user=serializer.validated_data['user'])
-                token.created = timezone.now()
-                token.save()'''
-            RESPONSE['token'] = token.key
-            user = token.user
-            RESPONSE['user'] = {
-                'name': user.get_full_name(),
-                'username': user.username}
-            return Response(RESPONSE, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-obtain_expiring_auth_token = ObtainExpiringAuthToken.as_view()

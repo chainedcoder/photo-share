@@ -147,7 +147,6 @@ def unfollow(request):
 
 
 @api_view(['GET'])
-@permission_classes((AllowAny, ))
 def get_user_friends(request):
     '''user = request.user
     friends = user.get_user_friends()
