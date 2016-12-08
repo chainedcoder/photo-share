@@ -1,5 +1,6 @@
 from io import FileIO, BufferedWriter
 import json
+import os
 
 from django.shortcuts import redirect
 from django.core.urlresolvers import reverse
@@ -7,9 +8,12 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
+from django.core.files import File
+from django.core.files.base import ContentFile
 from django.core.files.temp import NamedTemporaryFile
 
 from rest_framework import status
+from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -40,6 +44,7 @@ def sign_up(request):
         token = jwt_encode_handler(payload)
 
         response['token'] = token
+        response['user_id'] = user.pk
         response['msg'] = 'Account created successfully.'
         response['status_code'] = 0
     else:
@@ -49,11 +54,68 @@ def sign_up(request):
     return Response(response)
 
 
+@api_view(['GET', 'PATCH'])
+def account_detail(request, pk):
+    """
+    Retrieve or update account
+    :param request:
+    :param pk:
+    :return:
+    """
+    try:
+        account = User.objects.get(pk=pk)
+    except ObjectDoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    response = {}
+
+    if request.method == 'GET':
+        serializer = UserSerializer(account)
+        return Response(serializer.data)
+
+    if request.method == 'PATCH':
+        serializer = UserSerializer(account, data=request.data, partial=True)
+        if serializer.is_valid() and account == request.user:
+            serializer.save()
+            response['status_code'] = 0
+            response['msg'] = 'Profile updated'
+            return Response(response)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 def jwt_response_payload_handler(token, user=None, request=None):
     return {
         'token': token,
         'user': UserSerializer(user, context={'request': request}).data
     }
+
+
+@api_view(['POST'])
+def update_profile_picture(request):
+    response = {}
+    uploaded_image = request.data['image_file']
+    file_name = uploaded_image.name
+    file_content = ContentFile(uploaded_image.read())
+    request.user.profile_pic.save(file_name, file_content, save=True)
+    response['ppic_url'] = request.user.profile_pic.url
+    response['status_code'] = 0
+    return Response(response, status=201)
+
+
+@api_view(['POST'])
+def update_password(request):
+    response = {}
+    user = request.user
+    old_password = request.data['existing_password']
+    if not user.check_password(old_password):
+        response['status_code'] = 1
+        response['field_errors'] = {'existing_password': 'This password is incorrect'}
+        return Response(response)
+    new_password = request.data['new_password']
+    user.set_password(new_password)
+    user.save()
+    response['status_code'] = 0
+    return Response(response)
 
 
 class VideoUpload(APIView):
@@ -104,26 +166,6 @@ def check_google_user_registered(request):
         return Response({'is_registered': True})
     except ObjectDoesNotExist:
         return Response({'is_registered': False})
-
-
-@api_view(['POST'])
-def change_password(request):
-    RESPONSE = {}
-    user = request.user
-    old_pass = request.data['old_password']
-    if user.check_password(old_pass):
-        new_pass = request.data['new_password']
-        user.set_password(new_pass)
-        user.save()
-        # update_session_auth_hash(self.context.get('request'), user)
-        RESPONSE['msg'] = 'Password changed successfully.'
-        RESPONSE['status_code'] = 0
-        status_code = status.HTTP_200_OK
-    else:
-        RESPONSE['msg'] = 'Invalid password!'
-        RESPONSE['status_code'] = 1
-        status_code = status.HTTP_400_BAD_REQUEST
-    return Response(RESPONSE, status=status_code)
 
 
 @api_view(['GET'])
