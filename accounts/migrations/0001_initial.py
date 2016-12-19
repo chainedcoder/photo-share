@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations, models
 import django.utils.timezone
+from django.conf import settings
 import django.core.validators
 
 
@@ -34,7 +35,7 @@ class Migration(migrations.Migration):
                 ('account_verified_date', models.DateTimeField(null=True, blank=True)),
                 ('date_joined', models.DateTimeField(default=django.utils.timezone.now, verbose_name='date joined')),
                 ('last_seen', models.DateTimeField(null=True, verbose_name='last seen', blank=True)),
-                ('profile_pic', models.ImageField(null=True, upload_to='profile_pics')),
+                ('profile_pic', models.ImageField(null=True, upload_to='uploads/profile_pics')),
                 ('tink_qrcode', models.ImageField(null=True, upload_to='tink_qrcodes')),
                 ('bio', models.TextField(null=True, blank=True)),
                 ('birthday', models.DateField(null=True)),
@@ -47,6 +48,20 @@ class Migration(migrations.Migration):
                 'db_table': 'users',
                 'verbose_name': 'user',
                 'verbose_name_plural': 'users',
+            },
+        ),
+        migrations.CreateModel(
+            name='ProfileVideo',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('video_file', models.FileField(upload_to='user_videos')),
+                ('date_uploaded', models.DateTimeField(default=django.utils.timezone.now)),
+                ('status', models.IntegerField(default=0, choices=[(0, 'Pending'), (1, 'Processed')])),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                'default_permissions': (),
+                'db_table': 'user_videos',
             },
         ),
     ]

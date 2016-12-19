@@ -24,31 +24,35 @@ class UploadPhoto(APIView):
     parser_classes = (MultiPartParser, FormParser,)
 
     def post(self, request):
-        uploaded_image = request.data['image_file']
-        uploads_dir = os.path.join(MEDIA_ROOT, 'uploads/user_photos')
-        if not os.path.isdir(uploads_dir):
-            os.makedirs(uploads_dir)
+        try:
+            uploaded_image = request.data['image_file']
+            uploads_dir = os.path.join(MEDIA_ROOT, 'uploads/user_photos')
+            if not os.path.isdir(uploads_dir):
+                os.makedirs(uploads_dir)
 
-        dest_file_path = os.path.join(uploads_dir, uploaded_image.name)
+            dest_file_path = os.path.join(uploads_dir, uploaded_image.name)
 
-        with BufferedWriter(FileIO(dest_file_path, "wb")) as runtime_file:
-            for c in uploaded_image.chunks():
-                runtime_file.write(c)
+            with BufferedWriter(FileIO(dest_file_path, "wb")) as runtime_file:
+                for c in uploaded_image.chunks():
+                    runtime_file.write(c)
 
-        rel_path = 'uploads/user_photos/' + uploaded_image.name
+            rel_path = 'uploads/user_photos/' + uploaded_image.name
 
-        photo = UploadedPhoto.objects.create(
-            owner=request.user,
-            image=rel_path)
+            photo = UploadedPhoto.objects.create(
+                owner=request.user,
+                image=rel_path)
 
-        pub_msg = {
-            "task_type": 2,
-            "username": request.user.username,
-            "image_path": dest_file_path,
-            "photo_id": photo.pk
-        }
+            pub_msg = {
+                "task_type": 2,
+                "username": request.user.username,
+                "image_path": dest_file_path,
+                "photo_id": photo.pk
+            }
 
-        r.publish('recognition_tasks', json.dumps(pub_msg))
+            r.publish('recognition_tasks', json.dumps(pub_msg))
+
+        except Exception as e:
+            print e
 
         return Response({}, status=201)
 

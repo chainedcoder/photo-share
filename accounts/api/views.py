@@ -139,7 +139,7 @@ class VideoUpload(APIView):
 
         pub_msg = {
             "task_type": 1,
-            "username": request.user.username,
+            "user_id": request.user.pk,
             "video_path": profile_video.video_file.url
         }
 

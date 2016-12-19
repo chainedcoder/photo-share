@@ -7,11 +7,22 @@ from django.conf import settings
 
 BASE_UPLOAD_PATH = 'uploads/user_photos'
 
+IMAGE_PROCESS_STATUS = (
+    (0, 'Pending'),
+    (1, 'Completed')
+)
+
 
 class UploadedPhoto(models.Model):
     image = models.ImageField(upload_to=BASE_UPLOAD_PATH)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL)
+    location_latitude = models.FloatField(null=True)
+    location_longitude = models.FloatField(null=True)
+    city_name = models.CharField(max_length=150, null=True)
+    country_name = models.CharField(max_length=150, null=True)
     time_uploaded = models.DateTimeField(default=timezone.now)
+    faces_found = models.IntegerField(default=0)
+    process_status = models.IntegerField(choices=IMAGE_PROCESS_STATUS, default=0)
 
     class Meta:
         db_table = 'uploaded_photos'
@@ -24,8 +35,10 @@ class UploadedPhoto(models.Model):
 
 
 class PhotoStream(models.Model):
-    image = models.ForeignKey(UploadedPhoto)
+    from_user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='photos_from_user')
+    to_user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='photos_to_user')
     date_time = models.DateTimeField(default=timezone.now)
+    seen = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'photo_streams'
@@ -34,12 +47,14 @@ class PhotoStream(models.Model):
         default_permissions = ()
 
 
-class PhotoStreamUser(models.Model):
+class PhotoStreamPhoto(models.Model):
     stream = models.ForeignKey(PhotoStream)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    photo = models.ForeignKey(UploadedPhoto)
+    liked = models.BooleanField(default=False)
 
     class Meta:
-        db_table = 'photo_stream_users'
-        verbose_name = "Photo Stream User"
-        verbose_name_plural = "Photo Stream Users"
+        db_table = 'photo_stream_photos'
+        verbose_name = "Photo Stream Photo"
+        verbose_name_plural = "Photo Stream Photos"
         default_permissions = ()
+
