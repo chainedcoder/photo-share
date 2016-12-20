@@ -44,11 +44,12 @@ class PhotoStream(models.Model):
         db_table = 'photo_streams'
         verbose_name = "Photo Stream"
         verbose_name_plural = "Photo Streams"
+        ordering = ['-pk']
         default_permissions = ()
 
 
 class PhotoStreamPhoto(models.Model):
-    stream = models.ForeignKey(PhotoStream)
+    stream = models.ForeignKey(PhotoStream, related_name='images')
     photo = models.ForeignKey(UploadedPhoto)
     liked = models.BooleanField(default=False)
 

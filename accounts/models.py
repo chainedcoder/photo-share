@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from itertools import chain
+from hashlib import md5
 from cStringIO import StringIO
 
 import qrcode
@@ -120,12 +120,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         full_name = '%s %s' % (self.first_name, self.last_name)
         return full_name.strip()
 
-    def get_profile_pic(self):
+    def get_profile_pic(self, size=96):
         """
         Returns user profile pic or default one
         """
         if not self.profile_pic:
-            return "https://thesocietypages.org/socimages/files/2009/05/nopic_192.gif"
+            return 'https://www.gravatar.com/avatar/%s?d=identicon&s=%d&?r=pg' % (md5(self.email.encode('utf-8')).hexdigest(), size)
         else:
             return self.profile_pic.url
 

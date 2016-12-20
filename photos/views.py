@@ -13,56 +13,52 @@ from rest_framework.parsers import MultiPartParser, FormParser
 
 from tink_api.settings import BASE_DIR, MEDIA_ROOT, MEDIA_FOLDER_NAME, r
 
-from .serializers import PhotoSerializer
-from .models import UploadedPhoto
+from .serializers import PhotoSerializer, PhotoStreamSerializer
+from .models import UploadedPhoto, PhotoStream
 
 User = get_user_model
 
 
 class UploadPhoto(APIView):
     serializer_class = PhotoSerializer
-    parser_classes = (MultiPartParser, FormParser,)
+    parser_classes = (MultiPartParser, FormParser, )
 
     def post(self, request):
-        try:
-            uploaded_image = request.data['image_file']
-            uploads_dir = os.path.join(MEDIA_ROOT, 'uploads/user_photos')
-            if not os.path.isdir(uploads_dir):
-                os.makedirs(uploads_dir)
+        uploaded_image = request.data['image_file']
+        uploads_dir = os.path.join(MEDIA_ROOT, 'uploads/user_photos')
+        if not os.path.isdir(uploads_dir):
+            os.makedirs(uploads_dir)
 
-            dest_file_path = os.path.join(uploads_dir, uploaded_image.name)
+        dest_file_path = os.path.join(uploads_dir, uploaded_image.name)
 
-            with BufferedWriter(FileIO(dest_file_path, "wb")) as runtime_file:
-                for c in uploaded_image.chunks():
-                    runtime_file.write(c)
+        with BufferedWriter(FileIO(dest_file_path, "wb")) as runtime_file:
+            for c in uploaded_image.chunks():
+                runtime_file.write(c)
 
-            rel_path = 'uploads/user_photos/' + uploaded_image.name
+        rel_path = 'uploads/user_photos/' + uploaded_image.name
 
-            photo = UploadedPhoto.objects.create(
-                owner=request.user,
-                image=rel_path)
+        photo = UploadedPhoto.objects.create(
+            owner=request.user,
+            image=rel_path)
 
-            pub_msg = {
-                "task_type": 2,
-                "username": request.user.username,
-                "image_path": dest_file_path,
-                "photo_id": photo.pk
-            }
+        pub_msg = {
+            "task_type": 2,
+            "username": request.user.username,
+            "image_path": dest_file_path,
+            "photo_id": photo.pk
+        }
 
-            r.publish('recognition_tasks', json.dumps(pub_msg))
-
-        except Exception as e:
-            print e
+        r.publish('recognition_tasks', json.dumps(pub_msg))
 
         return Response({}, status=201)
 
 
-@api_view(['GET'])
-@permission_classes((AllowAny, ))
+@api_view(['GET', 'PATCH'])
 def photo_stream(request):
-    with open(BASE_DIR + '/photos/sample.json') as data_file:
-        data = json.load(data_file)
-    return Response(data)
+    if request.method == 'GET':
+        stream = PhotoStream.objects.filter(to_user=request.user).prefetch_related()
+        serializer = PhotoStreamSerializer(stream, many=True)
+        return Response(serializer.data)
 
 
 @api_view(['GET'])

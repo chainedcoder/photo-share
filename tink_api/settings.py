@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/1.9/ref/settings/
 
 import os
 import redis
-import datetime
+from datetime import timedelta
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -135,6 +135,8 @@ USE_L10N = True
 
 USE_TZ = True
 
+BASE_API_URL = 'http://192.168.0.30:8000'
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
@@ -166,7 +168,7 @@ REST_FRAMEWORK = {
 
 # JWT
 JWT_AUTH = {
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=365),
+    'JWT_EXPIRATION_DELTA': timedelta(days=365),
     'JWT_RESPONSE_PAYLOAD_HANDLER': 'accounts.api.views.jwt_response_payload_handler'
 }
 
@@ -177,3 +179,11 @@ REDIS_CONFIG = {
 }
 
 r = redis.StrictRedis(**REDIS_CONFIG)
+
+# celery
+CELERYBEAT_SCHEDULE = {
+    "create_photo_stream": {
+        "task": "photos.tasks.create_stream",
+        "schedule": timedelta(seconds=5)
+    },
+}
