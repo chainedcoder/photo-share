@@ -8,10 +8,11 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
+    ppic_url = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'bio', 'birthday', 'get_profile_pic')
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'bio', 'birthday', 'ppic_url')
         write_only_fields = ('password', )
         read_only_fields = ('id', )
 
@@ -26,6 +27,9 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
 
         return user
+
+    def get_ppic_url(self, obj):
+        return obj.get_profile_pic()
 
 
 class VideoUploadSerializer(serializers.ModelSerializer):

@@ -1,15 +1,4 @@
-import hashlib
-import datetime
-import random
-
-from django.contrib.auth import get_user_model
-from django.template.loader import get_template
-from django.utils import timezone
-
 from rest_framework import serializers
-
-from notifications.models import Notification
-from notifications.tasks import send_notifications
 
 from .models import Follow
 
@@ -19,10 +8,11 @@ class FollowRequestSerializer(serializers.HyperlinkedModelSerializer):
         source='user_1.username', read_only=True)
     name = serializers.CharField(
         source='user_1.get_full_name', read_only=True)
+    ppic_url = serializers.CharField(source='user_1.get_profile_pic')
 
     class Meta:
         model = Follow
-        fields = ('id', 'username', 'name')
+        fields = ('id', 'username', 'name', 'ppic_url')
 
 
 class FriendSerializer(serializers.HyperlinkedModelSerializer):
