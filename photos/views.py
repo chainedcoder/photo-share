@@ -3,6 +3,7 @@ import json
 from io import FileIO, BufferedWriter
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework import status
 from rest_framework.views import APIView
@@ -59,6 +60,17 @@ def photo_stream(request):
         stream = PhotoStream.objects.filter(to_user=request.user).prefetch_related()
         serializer = PhotoStreamSerializer(stream, many=True)
         return Response(serializer.data)
+
+
+@api_view(['PATCH'])
+def mark_stream_seen(request, stream_id):
+    try:
+        stream = PhotoStream.objects.get(pk=stream_id)
+        stream.seen = True
+        stream.save(update_fields=['seen'])
+        return Response({'status_code': 0})
+    except ObjectDoesNotExist:
+        return Response({'status_code': 1})
 
 
 @api_view(['GET'])

@@ -1,8 +1,9 @@
 import json
 
-from celery import task
+from django.core.exceptions import ObjectDoesNotExist
 
 from tink_api.settings import r
+from tink_api.celery import app
 from .models import UploadedPhoto, PhotoStream, PhotoStreamPhoto
 
 channel_name = 'recognition_results'
@@ -10,7 +11,7 @@ sub = r.pubsub()
 sub.subscribe(channel_name)
 
 
-@task
+@app.task
 def create_stream():
     """
     listens to redis queue for recognition results
@@ -28,13 +29,19 @@ def create_stream():
             photo.save()
             # get users in this image
             users = info['users_in_photo']
-            photos = []
+
             # create photo stream for each user
-            for user in users:
-                # check if another unseen stream exists
-                # if it does, add image to this stream instead of creating new one
-                ps = PhotoStream.objects.create(from_user=photo.owner, to_user_id=user)
-                sp = PhotoStreamPhoto(stream=ps, photo=photo)
-                photos.append(sp)
+            def yield_streams():
+                for user in users:
+                    # check if another unseen stream exists
+                    # if it does, add image to this stream instead of creating new one
+                    try:
+                        stream = PhotoStream.objects.get(to_user_id=user, from_user=photo.owner, seen=False)
+                        sp = PhotoStreamPhoto(stream=stream, photo=photo)
+                    except ObjectDoesNotExist:
+                        ps = PhotoStream.objects.create(from_user=photo.owner, to_user_id=user)
+                        sp = PhotoStreamPhoto(stream=ps, photo=photo)
+                    yield sp
+
             # insert photo streams to DB
-            PhotoStreamPhoto.objects.bulk_create(photos)
+            PhotoStreamPhoto.objects.bulk_create(list(yield_streams()))
