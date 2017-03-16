@@ -1,9 +1,14 @@
 from rest_framework import serializers
+from django.contrib.auth import get_user_model
 
 from .models import Follow
 
+User = get_user_model()
+
 
 class FollowRequestSerializer(serializers.HyperlinkedModelSerializer):
+    user_id = serializers.IntegerField(
+        source='user_1.id', read_only=True)
     username = serializers.CharField(
         source='user_1.username', read_only=True)
     name = serializers.CharField(
@@ -12,17 +17,22 @@ class FollowRequestSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Follow
-        fields = ('id', 'username', 'name', 'ppic_url')
+        fields = ('id', 'user_id', 'username', 'name', 'ppic_url')
 
 
-class FriendSerializer(serializers.HyperlinkedModelSerializer):
-    username = serializers.CharField(
-        source='user.username', read_only=True)
-    name = serializers.CharField(
-        source='user.get_full_name', read_only=True)
-    user_id = serializers.CharField(
-        source='user.pk', read_only=True)
+class FriendSerializer(serializers.ModelSerializer):
+    ppic_url = serializers.SerializerMethodField()
+    autosend = serializers.SerializerMethodField()
 
     class Meta:
-        model = Follow
-        fields = ('user_id', 'username', 'name')
+        model = User
+        fields = ('id', 'username', 'first_name', 'last_name', 'bio', 'ppic_url', 'autosend')
+        write_only_fields = ('password', )
+        read_only_fields = ('id', )
+
+    def get_ppic_url(self, obj):
+        return obj.get_profile_pic()
+
+    def get_autosend(self, obj):
+        # self.context.get("user_id")
+        return True

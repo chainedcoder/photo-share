@@ -12,10 +12,10 @@ class Follow(models.Model):
         (-1, 'Rejected')
     )
     user_1 = models.ForeignKey(
-        settings.AUTH_USER_MODEL, related_name='user')  # one who requested
+        settings.AUTH_USER_MODEL, related_name='user_from')  # one who requested
     # one whom the request was sent to
     user_2 = models.ForeignKey(
-        settings.AUTH_USER_MODEL, related_name='follower')
+        settings.AUTH_USER_MODEL, related_name='user_to')
     status = models.IntegerField(choices=FOLLOW_STATUS, default=0)
     date_requested = models.DateTimeField(default=timezone.now)
     date_accepted = models.DateTimeField(null=True)

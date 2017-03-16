@@ -140,17 +140,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         send_mail(subject, message, from_email, [self.email])
 
     def get_user_friends(self):
-        friends = Follow.objects.filter(Q(user_1=self) | Q(user_2=self))
-        a = []
-        for friend in friends:
-            if friend.user_1 == self:
-                c = friend.user_2
-            elif friend.user_2 == self:
-                c = friend.user_1
-            a.append(c)
-        return a
+        friends = Follow.objects.filter(Q(status=1), Q(user_1=self) | Q(user_2=self)).values_list('user_1', 'user_2')
+        friends_list = [e for l in friends for e in l if e != self.pk]
 
-    def are_friends(self, other_user):
+        return CustomUser.objects.filter(pk__in=friends_list).prefetch_related('user_from', 'user_to')
+
+    def is_friend(self, other_user):
         try:
             Follow.objects.get(
                 Q(user_1=self, user_2=other_user) | Q(user_2=self, user_1=other_user))

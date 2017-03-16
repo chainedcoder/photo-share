@@ -1,6 +1,3 @@
-import json
-
-from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
 from django.template.loader import get_template
@@ -25,19 +22,21 @@ User = get_user_model()
 
 @api_view(['POST'])
 def request_follow(request):
-    RESPONSE = {}
+    res = {}
     # user performing the action
     request_from = request.user
     try:
-        request_to = User.objects.get(pk=request.data['user_id'])
+        request_to = User.objects.get(pk=request.data['request_to_user'])
         if request_from == request_to:
-            RESPONSE['msg'] = 'Oops, an error occurred!'
+            res['msg'] = 'Oops, an error occurred!'
+            res['status_code'] = 1
             status_code = status.HTTP_400_BAD_REQUEST
         else:
             try:
                 Follow.objects.get(Q(user_1=request_from, user_2=request_to) | Q(
                     user_1=request_to, user_2=request_from))
-                RESPONSE['msg'] = 'You are already tinked with this person!'
+                res['msg'] = 'You are already tinked with this person!'
+                res['status_code'] = 1
                 status_code = status.HTTP_400_BAD_REQUEST
             except ObjectDoesNotExist:
                 follow = Follow(user_1=request_from, user_2=request_to)
@@ -53,12 +52,14 @@ def request_follow(request):
                 notification.recipient = request_to
                 notification.save()
                 send_notifications.delay()
-                RESPONSE['msg'] = 'Request sent.'
+                res['msg'] = 'Request sent.'
+                res['status_code'] = 0
                 status_code = status.HTTP_201_CREATED
     except ObjectDoesNotExist:
-        RESPONSE['msg'] = 'User does not exist!'
+        res['msg'] = 'User does not exist!'
+        res['status_code'] = 1
         status_code = status.HTTP_400_BAD_REQUEST
-    return Response(RESPONSE, status=status_code)
+    return Response(res, status=status_code)
 
 
 @api_view(['POST'])
@@ -96,7 +97,7 @@ def get_tink_requests(request):
 
 @api_view(['POST'])
 def accept_request(request):
-    RESPONSE = {}
+    res = {}
     request_id = request.data['request_id']
     try:
         follow = Follow.objects.get(pk=request_id, status=0)
@@ -104,12 +105,14 @@ def accept_request(request):
         follow.date_accepted = timezone.now()
         follow.save()
         # send requestor notification
-        RESPONSE['msg'] = 'Tink request accepted.'
+        res['msg'] = 'Tink request accepted.'
+        res['status_code'] = 0
         status_code = status.HTTP_200_OK
     except ObjectDoesNotExist:
-        RESPONSE['msg'] = 'Request does not exist.'
+        res['msg'] = 'Request does not exist.'
+        res['status_code'] = 1
         status_code = status.HTTP_400_BAD_REQUEST
-    return Response(RESPONSE, status=status_code)
+    return Response(res, status=status_code)
 
 
 @api_view(['POST'])
@@ -148,13 +151,11 @@ def unfollow(request):
 
 @api_view(['GET'])
 def get_user_friends(request):
-    '''user = request.user
+    user = request.user
     friends = user.get_user_friends()
-    serializer = UserSerializer(friends, many=True)
-    return Response(serializer.data)'''
-    with open(BASE_DIR + '/follows/sample_friends.json') as data_file:
-        data = json.load(data_file)
-    return Response(data)
+    serializer = FriendSerializer(friends, many=True, context={'user_id': user.pk})
+    num_requests = Follow.objects.filter(user_2=user, status=0).count()
+    return Response({'num_requests': num_requests, 'friends': serializer.data})
 
 
 @api_view(['POST'])

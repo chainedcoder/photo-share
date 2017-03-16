@@ -8,7 +8,7 @@ urlpatterns = [
     url(r'^photo/new/$', UploadPhoto.as_view(), name='photo-list'),
     url(r'^photo/(?P<pk>[0-9]+)/$', PhotoDetail.as_view(), name='photo-detail'),
     url(r'^photo-stream/$', photo_stream, name='photo-stream'),
-    url(r'^mark-stream-seen/(?P<stream_id>[0-9]+)/$', mark_stream_seen, name='mark-stream-seen'),
+    url(r'^mark-stream-seen/$', mark_stream_seen, name='mark-stream-seen'),
 
     url(r'^pending-outbox/$', sample_outbox_pending, name='pending-outbox'),
     url(r'^sent-outbox/$', sample_outbox_sent, name='sent-outbox'),
