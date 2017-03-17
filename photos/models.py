@@ -58,4 +58,5 @@ class PhotoStreamPhoto(models.Model):
         verbose_name = "Photo Stream Photo"
         verbose_name_plural = "Photo Stream Photos"
         default_permissions = ()
+        ordering = ['-pk']
 
