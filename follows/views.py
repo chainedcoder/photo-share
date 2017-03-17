@@ -30,14 +30,15 @@ def request_follow(request):
         if request_from == request_to:
             res['msg'] = 'Oops, an error occurred!'
             res['status_code'] = 1
-            status_code = status.HTTP_400_BAD_REQUEST
         else:
             try:
-                Follow.objects.get(Q(user_1=request_from, user_2=request_to) | Q(
+                f = Follow.objects.get(Q(status=0) | Q(status=1), Q(user_1=request_from, user_2=request_to) | Q(
                     user_1=request_to, user_2=request_from))
-                res['msg'] = 'You are already tinked with this person!'
+                if f.status == 0:
+                    res['msg'] = 'Friend request already sent.'
+                elif f.status == 1:
+                    res['msg'] = 'You are already friends with this person!'
                 res['status_code'] = 1
-                status_code = status.HTTP_400_BAD_REQUEST
             except ObjectDoesNotExist:
                 follow = Follow(user_1=request_from, user_2=request_to)
                 follow.save()
@@ -54,12 +55,10 @@ def request_follow(request):
                 send_notifications.delay()
                 res['msg'] = 'Request sent.'
                 res['status_code'] = 0
-                status_code = status.HTTP_201_CREATED
     except ObjectDoesNotExist:
         res['msg'] = 'User does not exist!'
         res['status_code'] = 1
-        status_code = status.HTTP_400_BAD_REQUEST
-    return Response(res, status=status_code)
+    return Response(res)
 
 
 @api_view(['POST'])

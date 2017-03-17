@@ -147,8 +147,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def is_friend(self, other_user):
         try:
-            Follow.objects.get(
-                Q(user_1=self, user_2=other_user) | Q(user_2=self, user_1=other_user))
+            Follow.objects.get(Q(status=1), Q(user_1=self, user_2=other_user) | Q(user_2=self, user_1=other_user))
             return True
         except ObjectDoesNotExist:
             return False

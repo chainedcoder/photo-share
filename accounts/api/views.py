@@ -1,6 +1,5 @@
 from io import FileIO, BufferedWriter
 import json
-import os
 
 from django.shortcuts import redirect
 from django.core.urlresolvers import reverse
@@ -13,7 +12,6 @@ from django.core.files.base import ContentFile
 from django.core.files.temp import NamedTemporaryFile
 
 from rest_framework import status
-from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -24,7 +22,7 @@ from rest_framework_jwt.settings import api_settings
 from tink_api.settings import r
 
 from accounts.models import ProfileVideo
-from .serializers import UserSerializer, VideoUploadSerializer
+from .serializers import UserSerializer, SearchUserSerializer, VideoUploadSerializer
 
 User = get_user_model()
 
@@ -224,9 +222,10 @@ def update_profile(request):
 @api_view(['GET'])
 def search(request):
     q = request.query_params['query']
+    user = request.user
     users = User.objects.filter(Q(first_name__icontains=q) | Q(
-        last_name__icontains=q) | Q(username__icontains=q))
-    serializer = UserSerializer(users, many=True)
+        last_name__icontains=q) | Q(username__icontains=q)).exclude(pk=user.pk)
+    serializer = SearchUserSerializer(users, many=True, context={'user': user})
     return Response(serializer.data)
 
 

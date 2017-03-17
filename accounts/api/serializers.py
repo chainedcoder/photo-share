@@ -32,6 +32,24 @@ class UserSerializer(serializers.ModelSerializer):
         return obj.get_profile_pic()
 
 
+class SearchUserSerializer(serializers.ModelSerializer):
+    ppic_url = serializers.SerializerMethodField()
+    is_friend = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'first_name', 'last_name', 'ppic_url', 'is_friend')
+        write_only_fields = ('password', )
+        read_only_fields = ('id', )
+
+    def get_ppic_url(self, obj):
+        return obj.get_profile_pic()
+
+    def get_is_friend(self, obj):
+        user = self.context.get("user")
+        return user.is_friend(obj.pk)
+
+
 class VideoUploadSerializer(serializers.ModelSerializer):
 
     class Meta:
