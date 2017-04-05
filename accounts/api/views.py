@@ -121,6 +121,7 @@ class VideoUpload(APIView):
     parser_classes = (MultiPartParser, FormParser, )
 
     def post(self, request, format=None):
+        print request.data
         upload = request.data['video_file']
         fh = NamedTemporaryFile(delete=False)
 
@@ -133,12 +134,15 @@ class VideoUpload(APIView):
 
         profile_video = ProfileVideo.objects.create(
             user=request.user,
-            video_file=filename)
+            video_file=filename,
+            os_type=request.data['os_type']
+        )
 
         pub_msg = {
             "task_type": 1,
             "user_id": request.user.pk,
-            "video_path": profile_video.video_file.url
+            "video_path": profile_video.video_file.url,
+            "os_type": profile_video.os_type
         }
 
         r.publish('recognition_tasks', json.dumps(pub_msg))

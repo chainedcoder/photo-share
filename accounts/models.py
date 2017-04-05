@@ -27,6 +27,11 @@ USER_VIDEO_STATUS = (
     (1, 'Processed')
 )
 
+OS_TYPES = (
+    (1, 'Android'),
+    (2, 'iOS')
+)
+
 
 class CustomUserManager(BaseUserManager):
 
@@ -127,7 +132,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         if not self.profile_pic:
             return 'https://www.gravatar.com/avatar/%s?d=identicon&s=%d&?r=pg' % (md5(self.email.encode('utf-8')).hexdigest(), size)
         else:
-            return self.profile_pic.url
+            return settings.BASE_API_URL + self.profile_pic.url
 
     def get_short_name(self):
         "Returns the short name for the user."
@@ -186,6 +191,7 @@ class ProfileVideo(models.Model):
     video_file = models.FileField(upload_to='user_videos')
     date_uploaded = models.DateTimeField(default=timezone.now)
     status = models.IntegerField(choices=USER_VIDEO_STATUS, default=0)
+    os_type = models.PositiveIntegerField(choices=OS_TYPES, null=True)
 
     class Meta:
         db_table = 'user_videos'
