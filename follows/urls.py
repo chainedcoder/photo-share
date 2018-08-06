@@ -1,13 +1,14 @@
 from django.conf.urls import url
 
-from .views import *
+from . import views
 
 urlpatterns = [
-    url(r'new-request/$', request_follow, name="request-follow"),
-    url(r'request-response/$', accept_request, name="accept-request"),
-    url(r'requests/$', get_tink_requests, name="friend-requests"),
-    url(r'get-friends/$', get_user_friends, name="get-friends"),
-    url(r'delete-request/$', delete_request, name="delete-request"),
-    url(r'unfollow/$', unfollow, name="unfollow"),
-    url(r'follow/qrcode/(?P<user_id>\d+)/$', follow_qrcode, name="follow-qrcode")
+    url(r'^$', views.FriendList.as_view()),
+    url(r'requests/count/$', views.get_num_friend_requests),
+    url(r'count/$', views.get_num_friends),
+    url(r'requests/$', views.FriendRequestList.as_view()),
+    url(r'requests/(?P<public_id>[0-9a-f-]+)/$', views.FriendRequestDetail.as_view()),
+    url(r'users/(?P<public_id>[0-9a-f-]+)/count/$', views.get_user_num_friends),
+    url(r'(?P<user_id>[0-9a-f-]+)/toggle-auto-send/$', views.alter_auto_send),
+    url(r'unfriend/(?P<user_id>[0-9a-f-]+)/$', views.unfriend)
 ]

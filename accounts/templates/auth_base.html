@@ -1,0 +1,65 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>{% block title %} {% endblock %} &middot; Tink</title>
+
+	<!-- Global stylesheets -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+    <style type="text/css">
+
+        body {
+          background: #eee !important;
+        }
+
+        .wrapper {
+          margin-top: 80px;
+          margin-bottom: 80px;
+        }
+
+        .form-signin {
+          max-width: 380px;
+          padding: 15px 35px 45px;
+          margin: 0 auto;
+          background-color: #fff;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .form-signin .form-signin-heading,
+        .form-signin button {
+          margin-bottom: 30px;
+        }
+        .form-signin {
+          font-weight: normal;
+        }
+        .form-signin .form-control {
+          position: relative;
+          font-size: 16px;
+          height: auto;
+          padding: 10px;
+          -webkit-box-sizing: border-box;
+          -moz-box-sizing: border-box;
+          box-sizing: border-box;
+        }
+        .form-signin .form-control:focus {
+          z-index: 2;
+        }
+        .form-signin input[type="email"] {
+          margin-bottom: 30px;
+          border-bottom-left-radius: 0;
+          border-bottom-right-radius: 0;
+        }
+    </style>
+	<!-- /global stylesheets -->
+
+</head>
+<body>
+
+	  <div class="wrapper">
+          {% block content %} {% endblock %}
+      </div>
+
+</body>
+</html>

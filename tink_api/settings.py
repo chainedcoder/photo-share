@@ -49,7 +49,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'follows',
-    'photos'
+    'photos',
+    'feed'
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -101,6 +102,9 @@ DATABASES = {
 
 # Custom user model
 AUTH_USER_MODEL = 'accounts.CustomUser'
+
+# Custom authentication backend using email and password
+AUTHENTICATION_BACKENDS = ('tink_api.backends.EmailAuthBackend', )
 
 # Email settings
 EMAIL_HOST = 'smtp.sendgrid.net'
@@ -156,20 +160,21 @@ MEDIA_URL = '/media/'
 
 # DRF
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.BasicAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-    ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
-    )
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'core.utils.CustomPaginator',
+    'PAGE_SIZE': 20
 }
 
-# JWT
 JWT_AUTH = {
     'JWT_EXPIRATION_DELTA': timedelta(days=365),
-    'JWT_RESPONSE_PAYLOAD_HANDLER': 'accounts.api.views.jwt_response_payload_handler'
+    'JWT_RESPONSE_PAYLOAD_HANDLER': 'accounts.api.utils.jwt_response_payload_handler'
 }
 
 REDIS_CONFIG = {

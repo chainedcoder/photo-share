@@ -2,16 +2,29 @@ from django.conf.urls import url
 
 from rest_framework_jwt.views import obtain_jwt_token
 
-from .api.views import (sign_up, account_detail, update_profile_picture, search, VideoUpload,
-                        update_password, update_profile)
+from . import views
+from .api.views import (UserList, CreateUser, Profile, PasswordChange, UpdateProfilePicture,
+                        VideoUpload, check_credential_availability, check_password)
 
 urlpatterns = [
-    url(r'sign-up/$', sign_up, name="sign-up"),
+    url(r'sign-up/$', CreateUser.as_view()),
+    url(r'check-credential-availability/', check_credential_availability),
     url(r'sign-in/$', obtain_jwt_token),
-    url(r'(?P<pk>\d+)/$', account_detail),
-    url(r'update-profile-picture/$', update_profile_picture),
-    url(r'change-password/$', update_password),
-    url(r'upload-video/', VideoUpload.as_view(), name='upload-video'),
-    url(r'update-profile/', update_profile, name='update-profile'),
-    url(r'search/', search, name='search'),
+    url(r'users/$', UserList.as_view()),
+    url(r'users/(?P<public_id>[0-9a-f-]+)/$', Profile.as_view()),
+    url(r'change-password/$', PasswordChange.as_view()),
+    url(r'check-password/$', check_password),
+
+    url(r'update-profile-picture/$', UpdateProfilePicture.as_view()),
+    url(r'new-video/', VideoUpload.as_view(), name='new-video'),
+    # password reset
+    url(r'begin-password-reset/$', views.begin_password_reset,
+        name='begin-password-reset'),
+    url(r'password-reset-initiated/$', views.password_reset_initiated,
+        name='password-reset-initiated'),
+    url(r'password/reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
+        views.reset_password,
+        name='password-reset'),
+    url(r'password-reset-complete/$', views.reset_password_complete,
+        name='password-reset-complete'),
 ]

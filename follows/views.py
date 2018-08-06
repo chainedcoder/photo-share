@@ -1,167 +1,154 @@
-from django.shortcuts import get_object_or_404
-from django.core.exceptions import ObjectDoesNotExist
-from django.template.loader import get_template
-from django.utils import timezone
-from django.db.models import Q
+import itertools
 
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.decorators import api_view
+from rest_framework.generics import GenericAPIView, ListAPIView
+from rest_framework.mixins import (RetrieveModelMixin, UpdateModelMixin, ListModelMixin,
+                                   CreateModelMixin)
 from rest_framework.response import Response
 
-from notifications.models import Notification
-from notifications.tasks import send_notifications
-from accounts.api.serializers import UserSerializer
-
-from tink_api.settings import BASE_DIR
 from .models import Follow
-from .serializers import *
+from .serializers import FollowRequestSerializer, FriendSerializer
 
 User = get_user_model()
 
 
-@api_view(['POST'])
-def request_follow(request):
-    res = {}
-    # user performing the action
-    request_from = request.user
-    try:
-        request_to = User.objects.get(pk=request.data['request_to_user'])
-        if request_from == request_to:
-            res['msg'] = 'Oops, an error occurred!'
-            res['status_code'] = 1
-        else:
-            try:
-                f = Follow.objects.get(Q(status=0) | Q(status=1), Q(user_1=request_from, user_2=request_to) | Q(
-                    user_1=request_to, user_2=request_from))
-                if f.status == 0:
-                    res['msg'] = 'Friend request already sent.'
-                elif f.status == 1:
-                    res['msg'] = 'You are already friends with this person!'
-                res['status_code'] = 1
-            except ObjectDoesNotExist:
-                follow = Follow(user_1=request_from, user_2=request_to)
-                follow.save()
-                # notify request_to
-                notification = Notification.objects.create(mode=2)
-                notification.subject = 'New Tink Request'
-                content = get_template('notifications/new_tink_request.txt')
-                d = {
-                    'request_from': request_from.get_full_name()
-                }
-                notification.content = content
-                notification.recipient = request_to
-                notification.save()
-                send_notifications.delay()
-                res['msg'] = 'Request sent.'
-                res['status_code'] = 0
-    except ObjectDoesNotExist:
-        res['msg'] = 'User does not exist!'
-        res['status_code'] = 1
-    return Response(res)
+@api_view(['GET'])
+def get_num_friend_requests(request):
+    num = Follow.objects.filter(user_to=request.user, status=0).count()
+    return Response({"friend_requests": num})
 
 
-@api_view(['POST'])
-def follow_qrcode(request, user_id):
-    RESPONSE = {}
-    scanner = request.user
-    scanee = User.objects.get(pk=user_id)
-    if scanner == scanee:
-        RESPONSE['msg'] = "Could not complete action."
-        RESPONSE['status_code'] = 1
-    else:
+class FriendRequestList(ListModelMixin, CreateModelMixin, GenericAPIView):
+    serializer_class = FollowRequestSerializer
+
+    def get(self, request, *args, **kwargs):
+        """
+        Returns a list of friend requests for a user
+        """
+        return self.list(request, *args, **kwargs)
+
+    def post(self, request):
+        """
+        Saves a new friend request
+        """
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save(user_from_id=request.user.pk)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get_queryset(self):
+        user = self.request.user
+        return Follow.objects.filter(user_to=user, status=0).select_related('user_to')
+
+    def paginate_queryset(self, queryset):
+        return None
+
+
+class FriendRequestDetail(RetrieveModelMixin, UpdateModelMixin, GenericAPIView):
+    serializer_class = FollowRequestSerializer
+    queryset = Follow.objects.all()
+    lookup_field = 'public_id'
+    lookup_url_kwarg = 'public_id'
+
+    def get(self, request, *args, **kwargs):
+        """
+        Returns details of a friend request
+        """
+        return self.retrieve(request, *args, **kwargs)
+
+    def patch(self, request, public_id):
+        """
+        Updates a friend request, mainly its status
+        """
+        req = self.get_friend_request(public_id)
+        if req:
+            serializer = self.serializer_class(req, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    @staticmethod
+    def get_friend_request(public_id):
         try:
-            follow = Follow.objects.get(Q(user_1=scanner, user_2=scanee) | Q(
-                user_1=scanee, user_2=scanner))
-            RESPONSE['msg'] = 'You are already tinked with this person!'
-            if not follow.date_accepted:
-                RESPONSE['msg'] = 'A tink request is pending confirmation.'
-            RESPONSE['status_code'] = 1
+            return Follow.objects.get(public_id=public_id)
         except ObjectDoesNotExist:
-            follow = Follow(user_1=scanner, user_2=scanee, status=1,
-                            date_accepted=timezone.now())
-            follow.save()
-            RESPONSE['msg'] = 'Successfully tinked with {0}'.format(scanee.get_full_name())
-            RESPONSE['status_code'] = 0
-    return Response(RESPONSE)
+            return None
+
+
+class FriendList(ListAPIView):
+    serializer_class = FriendSerializer
+
+    def get(self, request, *args, **kwargs):
+        """
+        Returns a list of a user's friends
+        """
+        return self.list(request, *args, **kwargs)
+
+    def get_queryset(self):
+        user = self.request.user
+        idx = Follow.objects.filter(Q(status=1), Q(user_from=user) | Q(user_to=user)).values_list('user_from', 'user_to')
+        user_idx = list(filter(lambda a: a != user.pk, list(itertools.chain.from_iterable(idx))))
+        users = User.objects.filter(pk__in=user_idx).prefetch_related('user_from', 'user_to')
+        return users
 
 
 @api_view(['GET'])
-def get_tink_requests(request):
+def get_num_friends(request):
     user = request.user
-    requests = Follow.objects.filter(status=0, user_2=user)
-    serializer = FollowRequestSerializer(requests, many=True)
-    return Response(serializer.data)
-
-
-@api_view(['POST'])
-def accept_request(request):
-    res = {}
-    request_id = request.data['request_id']
-    try:
-        follow = Follow.objects.get(pk=request_id, status=0)
-        follow.status = 1
-        follow.date_accepted = timezone.now()
-        follow.save()
-        # send requestor notification
-        res['msg'] = 'Tink request accepted.'
-        res['status_code'] = 0
-        status_code = status.HTTP_200_OK
-    except ObjectDoesNotExist:
-        res['msg'] = 'Request does not exist.'
-        res['status_code'] = 1
-        status_code = status.HTTP_400_BAD_REQUEST
-    return Response(res, status=status_code)
-
-
-@api_view(['POST'])
-def delete_request(request):
-    RESPONSE = {}
-    request_id = request.data['request_id']
-    try:
-        follow = Follow.objects.get(pk=request_id, status=0)
-        follow.delete()
-        # send requestor notification
-        RESPONSE['msg'] = 'Tink request removed.'
-        status_code = status.HTTP_200_OK
-    except ObjectDoesNotExist:
-        RESPONSE['msg'] = 'Request does not exist.'
-        status_code = status.HTTP_400_BAD_REQUEST
-    return Response(RESPONSE, status=status_code)
-
-
-@api_view(['POST'])
-def unfollow(request):
-    RESPONSE = {}
-    request_from = request.user
-    request_to = get_object_or_404(User, pk=request.data('user_id'))
-    try:
-        follow = Follow.objects.get(Q(user_1=request_from, user_2=request_to) | Q(
-            user_1=request_from, user_2=request_to))
-        follow.delete()
-        RESPONSE['msg'] = 'Successfully untinked {0}'.format(
-            unfriend.username)
-        status_code = status.HTTP_201_CREATED
-    except ObjectDoesNotExist:
-        RESPONSE['msg'] = 'You are not tinked with this person.'
-        status_code = status.HTTP_400_BAD_REQUEST
-    return Response(RESPONSE, status=status_code)
+    friends = Follow.objects.filter(
+        Q(status=1), Q(user_from=user) | Q(user_to=user)
+    ).count()
+    return Response({"friends": friends})
 
 
 @api_view(['GET'])
-def get_user_friends(request):
+def get_user_num_friends(request, public_id):
+    try:
+        user = User.objects.get(public_id=public_id)
+        friends = Follow.objects.filter(
+            Q(status=1), Q(user_from=user) | Q(user_to=user)
+        ).count()
+        return Response({"friends": friends})
+    except ObjectDoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+def alter_auto_send(request, user_id):
     user = request.user
-    friends = user.get_user_friends()
-    serializer = FriendSerializer(friends, many=True, context={'user_id': user.pk})
-    num_requests = Follow.objects.filter(user_2=user, status=0).count()
-    return Response({'num_requests': num_requests, 'friends': serializer.data})
+    other_user = User.objects.get(public_id=user_id)
+    # find friendship
+    try:
+        friendship = Follow.objects.get(Q(user_from=user, user_to=other_user) | Q(user_to=user, user_from=other_user))
+        if friendship.user_from == user:
+            friendship.user_from_to_user_to = not friendship.user_from_to_user_to
+        elif friendship.user_to == user:
+            friendship.user_to_to_user_from = not friendship.user_to_to_user_from
+        friendship.save(update_fields=['user_from_to_user_to', 'user_to_to_user_from'])
+        return Response(status=status.HTTP_200_OK)
+    except ObjectDoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 @api_view(['POST'])
-def block_user(request):
-    pass
+def unfriend(request, user_id):
+    user = request.user
+    try:
+        other_user = User.objects.get(public_id=user_id)
+        try:
+            friendship = Follow.objects.get(Q(user_from=user, user_to=other_user) | Q(user_from=other_user, user_to=user))
+            friendship.status = 4
+            friendship.save(update_fields=['status'])
+            return Response(status=status.HTTP_200_OK)
+        except ObjectDoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+    except ObjectDoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
-
-@api_view(['POST'])
-def unblock_user(request):
-    pass

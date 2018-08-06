@@ -1,45 +1,101 @@
 from rest_framework import serializers
 
-from tink_api.settings import BASE_API_URL
+from accounts.api.serializers import BaseUserSerializer
 from .models import UploadedPhoto, PhotoStream, PhotoStreamPhoto
 
 
-class PhotoSerializer(serializers.ModelSerializer):
-    owner = serializers.Field(source='owner.username', required=False)
+class BaseImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UploadedPhoto
-        fields = ('id', 'image', 'owner', 'time_uploaded')
-        read_only_fields = ('id', )
+        fields = ('image', 'time_uploaded', 'public_id')
+        read_only_fields = ('time_uploaded', 'public_id')
+
+    def create(self, validated_data):
+        image = UploadedPhoto(**validated_data)
+        owner = validated_data.get('owner')
+        image.owner = owner
+        image.save()
+        return image
 
 
-class StreamPhotoSerializer(serializers.ModelSerializer):
-    photo_url = serializers.SerializerMethodField()
+class ImageSerializer(serializers.ModelSerializer):
+
+    owner = BaseUserSerializer(read_only=True)
+
+    class Meta:
+        model = UploadedPhoto
+        fields = ('image', 'owner', 'time_uploaded', 'public_id')
+        read_only_fields = ('time_uploaded', 'public_id')
+
+
+class FeedPhotoSerializer(serializers.ModelSerializer):
+    photo = BaseImageSerializer()
 
     class Meta:
         model = PhotoStreamPhoto
-        fields = ('id', 'photo_url', 'liked')
-        read_only_fields = ('id', )
-
-    @staticmethod
-    def get_photo_url(obj):
-        return BASE_API_URL + obj.photo.image.url
+        fields = ('photo', 'liked', 'deleted', 'public_id')
+        write_only_fields = ('deleted', )
 
 
-class PhotoStreamSerializer(serializers.ModelSerializer):
-    name = serializers.ReadOnlyField(source='from_user.get_full_name')
-    username = serializers.ReadOnlyField(source='from_user.username')
-    profile_pic_url = serializers.ReadOnlyField(source='from_user.get_profile_pic')
-    user_id = serializers.ReadOnlyField(source='from_user.pk')
-    num_tinks = serializers.SerializerMethodField()
-    images = StreamPhotoSerializer(many=True, read_only=True)
+class MainFeedSerializer(serializers.ModelSerializer):
+    from_user = BaseUserSerializer()
+    num_photos = serializers.SerializerMethodField()
+    images = serializers.SerializerMethodField()
 
     class Meta:
         model = PhotoStream
-        read_only_fields = ('name', )
-        fields = ['id', 'name', 'username', 'profile_pic_url', 'user_id',
-                  'num_tinks', 'date_time', 'seen', 'images']
+        fields = ['public_id', 'from_user',
+                  'num_photos', 'date_time', 'seen', 'images']
 
     @staticmethod
-    def get_num_tinks(obj):
-        return len(obj.images.all())
+    def get_num_photos(obj):
+        return obj.images.filter(deleted=False, send_photo=True).count()
+
+    def get_images(self, obj):
+        images = PhotoStreamPhoto.objects.filter(stream=obj, deleted=False, send_photo=True).select_related('photo')
+        serializer = FeedPhotoSerializer(instance=images, many=True, context={'request': self.context['request']})
+        return serializer.data
+
+
+class OutboxFeedBaseSerializer(serializers.ModelSerializer):
+    to_user = BaseUserSerializer()
+    num_photos = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PhotoStream
+        fields = ['public_id', 'to_user', 'num_photos', 'date_time']
+
+    @staticmethod
+    def get_num_photos(obj):
+        return obj.images.filter(deleted=False, send_photo=False).count()
+
+
+class OutboxSentSerializer(serializers.ModelSerializer):
+    to_user = BaseUserSerializer()
+    num_photos = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PhotoStream
+        fields = ['public_id', 'to_user', 'num_photos', 'date_time']
+
+    @staticmethod
+    def get_num_photos(obj):
+        return obj.images.filter(deleted=False, send_photo=True).count()
+
+
+class OutboxFeedSerializer(OutboxFeedBaseSerializer):
+    images = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PhotoStream
+        fields = ['public_id', 'to_user', 'num_photos', 'date_time', 'images']
+
+    def get_images(self, obj):
+        images = PhotoStreamPhoto.objects.filter(stream=obj, deleted=False, send_photo=False).select_related('photo')
+        serializer = FeedPhotoSerializer(instance=images, many=True, context={'request': self.context['request']})
+        return serializer.data
+
+
+class OutboxImageSendSerializer(serializers.Serializer):
+    photo_id = serializers.UUIDField()

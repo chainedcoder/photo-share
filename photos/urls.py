@@ -1,16 +1,26 @@
 from django.conf.urls import url
 
-from .views import (UploadPhoto, PhotoDetail, photo_stream, mark_stream_seen, sample_outbox_pending,
-                    sample_outbox_sent, sample_photos)
-
+from .views import (UploadPhoto, MainFeed, StreamDetail, StreamPhotoList, UserPhotos,
+                    OutboxFeed, OutboxSentFeed, FriendPhotos, like_photo, mark_feed_seen,
+                    delete_photo, get_num_shares, LikedPhotosList, send_all_photos_in_feed,
+                    send_photos_in_outbox, test_auto_send)
 
 urlpatterns = [
-    url(r'^photo/new/$', UploadPhoto.as_view(), name='photo-list'),
-    url(r'^photo/(?P<pk>[0-9]+)/$', PhotoDetail.as_view(), name='photo-detail'),
-    url(r'^photo-stream/$', photo_stream, name='photo-stream'),
-    url(r'^mark-stream-seen/$', mark_stream_seen, name='mark-stream-seen'),
-
-    url(r'^pending-outbox/$', sample_outbox_pending, name='pending-outbox'),
-    url(r'^sent-outbox/$', sample_outbox_sent, name='sent-outbox'),
-    url(r'^user-photos/$', sample_photos, name='user-photos'),
+    url(r'streams/$', MainFeed.as_view()),
+    url(r'streams/(?P<public_id>[0-9a-f-]+)/$', StreamDetail.as_view()),
+    url(r'streams/(?P<public_id>[0-9a-f-]+)/photos/$',
+        StreamPhotoList.as_view()),
+    url(r'streams/(?P<public_id>[0-9a-f-]+)/seen/$', mark_feed_seen),
+    url(r'outbox/$', OutboxFeed.as_view()),
+    url(r'outbox/sent/$', OutboxSentFeed.as_view()),
+    url(r'outbox/(?P<public_id>[0-9a-f-]+)/send-all-photos/$', send_all_photos_in_feed),
+    url(r'outbox/send-photos/$', send_photos_in_outbox),
+    url(r'new/$', UploadPhoto.as_view()),
+    url(r'for-user/$', UserPhotos.as_view()),
+    url(r'users/(?P<public_id>[0-9a-f-]+)/$', FriendPhotos.as_view()),
+    url(r'(?P<public_id>[0-9a-f-]+)/like/$', like_photo),
+    url(r'liked/$', LikedPhotosList.as_view()),
+    url(r'(?P<public_id>[0-9a-f-]+)/delete/$', delete_photo),
+    url(r'shared/user/(?P<public_id>[0-9a-f-]+)/$', get_num_shares),
+    url(r'test-auto-send/(?P<user_from>\d+)/(?P<user_to>\d+)/$', test_auto_send)
 ]

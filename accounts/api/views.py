@@ -1,119 +1,177 @@
-from io import FileIO, BufferedWriter
 import json
+from io import FileIO, BufferedWriter
 
-from django.shortcuts import redirect
-from django.core.urlresolvers import reverse
-from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Q
-from django.core.files import File
-from django.core.files.base import ContentFile
 from django.core.files.temp import NamedTemporaryFile
-
+from django.db.models import Q
 from rest_framework import status
-from rest_framework.permissions import AllowAny
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.generics import CreateAPIView, GenericAPIView, ListAPIView, UpdateAPIView
+from rest_framework.mixins import (UpdateModelMixin, RetrieveModelMixin)
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_jwt.settings import api_settings
 
-from tink_api.settings import r
-
 from accounts.models import ProfileVideo
-from .serializers import UserSerializer, SearchUserSerializer, VideoUploadSerializer
+from tink_api.settings import r
+from .serializers import (UserSerializer, PasswordChangeSerializer, ProfilePictureSerializer,
+                          VideoUploadSerializer, GeneralUserSerializer)
 
 User = get_user_model()
 
 
-@api_view(['POST'])
-@permission_classes((AllowAny, ))
-def sign_up(request):
-    response = dict()
-    serialized = UserSerializer(data=request.data)
-    if serialized.is_valid():
-        user = serialized.create(request.data)
-        # log in user
-        jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
-        jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+class CreateUser(CreateAPIView):
+    permission_classes = (AllowAny, )
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
 
-        payload = jwt_payload_handler(user)
-        token = jwt_encode_handler(payload)
+    def post(self, request, *args, **kwargs):
+        """
+        Registers a new user
+        """
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
 
-        response['token'] = token
-        response['user_id'] = user.pk
-        response['msg'] = 'Account created successfully.'
-        response['status_code'] = 0
-    else:
-        response['status_code'] = 1
-        response['msg'] = 'Something went wrong.'
-        response['errors'] = serialized._errors
-    return Response(response)
+            # login user
+            jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+            jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+            jwt_response_handler = api_settings.JWT_RESPONSE_PAYLOAD_HANDLER
 
+            payload = jwt_payload_handler(user)
+            token = jwt_encode_handler(payload)
 
-@api_view(['GET', 'PATCH'])
-def account_detail(request, pk):
-    """
-    Retrieve or update account
-    :param request:
-    :param pk:
-    :return:
-    """
-    try:
-        account = User.objects.get(pk=pk)
-    except ObjectDoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+            response = jwt_response_handler(token, user)
 
-    response = {}
-
-    if request.method == 'GET':
-        serializer = UserSerializer(account)
-        return Response(serializer.data)
-
-    if request.method == 'PATCH':
-        serializer = UserSerializer(account, data=request.data, partial=True)
-        if serializer.is_valid() and account == request.user:
-            serializer.save()
-            response['status_code'] = 0
-            response['msg'] = 'Profile updated'
-            return Response(response)
+            return Response(response, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def jwt_response_payload_handler(token, user=None, request=None):
-    return {
-        'token': token,
-        'user': UserSerializer(user, context={'request': request}).data
-    }
+@api_view(['GET'])
+@permission_classes((AllowAny, ))
+def check_credential_availability(request):
+    if 'email' in request.query_params and request.query_params.get('email') is not None:
+        try:
+            User.objects.get(email=request.query_params['email'])
+            return Response({'available': False})
+        except ObjectDoesNotExist:
+            return Response({'available': True})
+    if 'username' in request.query_params and request.query_params.get('username') is not None:
+        try:
+            User.objects.get(username=request.query_params['username'])
+            return Response({'available': False})
+        except ObjectDoesNotExist:
+            return Response({'available': True})
+    return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 @api_view(['POST'])
-def update_profile_picture(request):
-    response = {}
-    uploaded_image = request.data['image_file']
-    file_name = uploaded_image.name
-    file_content = ContentFile(uploaded_image.read())
-    request.user.profile_pic.save(file_name, file_content, save=True)
-    response['ppic_url'] = request.user.profile_pic.url
-    response['status_code'] = 0
-    return Response(response, status=201)
-
-
-@api_view(['POST'])
-def update_password(request):
-    response = {}
+def check_password(request):
+    password = request.data['password']
     user = request.user
-    old_password = request.data['existing_password']
-    if not user.check_password(old_password):
-        response['status_code'] = 1
-        response['field_errors'] = {'existing_password': 'This password is incorrect'}
-        return Response(response)
-    new_password = request.data['new_password']
-    user.set_password(new_password)
-    user.save()
-    response['status_code'] = 0
-    return Response(response)
+    if user.check_password(password):
+        return Response({'valid': True})
+    else:
+        return Response({'valid': False})
+
+
+class UserList(ListAPIView):
+    serializer_class = GeneralUserSerializer
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def get_queryset(self):
+        q = self.request.query_params.get('q', None)
+        users = []
+        if q is not None:
+            users = User.objects.filter(
+                Q(first_name__icontains=q) | Q(last_name__icontains=q) | Q(username__icontains=q)
+            ).exclude(pk=self.request.user.pk)
+        return users
+
+    def paginate_queryset(self, queryset):
+        return None
+
+
+class Profile(RetrieveModelMixin, UpdateModelMixin, GenericAPIView):
+    queryset = User.objects.all()
+    lookup_field = 'public_id'
+    lookup_url_kwarg = 'public_id'
+
+    def get(self, request, *args, **kwargs):
+        """
+        Returns a user's profile
+        """
+        return self.retrieve(request, *args, **kwargs)
+
+    def get_serializer_class(self):
+        user = self.get_object()
+        request_user = self.request.user
+
+        if user == request_user:
+            return UserSerializer
+        else:
+            return GeneralUserSerializer
+
+    def patch(self, request, public_id):
+        """
+        Updates a user's profile - name, birthday, bio
+        """
+        user = self.get_object()
+        if user is not None and user == request.user:
+            serializer = UserSerializer(user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class PasswordChange(UpdateAPIView):
+    serializer_class = PasswordChangeSerializer
+    model = User
+
+    def get_object(self):
+        obj = self.request.user
+        return obj
+
+    def update(self, request, *args, **kwargs):
+        obj = self.get_object()
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            current_password = serializer.data['current_password']
+            new_password = serializer.data['new_password']
+
+            # check if current password is valid
+            if not obj.check_password(current_password):
+                return Response({'msg': 'Invalid current password'}, status=status.HTTP_401_UNAUTHORIZED)
+
+            obj.set_password(new_password)
+            obj.save(update_fields=['password'])
+            return Response({'msg': 'Password updated successfully'}, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UpdateProfilePicture(UpdateAPIView):
+    parser_classes = (MultiPartParser, FormParser, )
+    serializer_class = ProfilePictureSerializer
+
+    def get_object(self):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            user = self.get_object()
+            profile_pic = request.data['profile_pic']
+            user.profile_pic.save(profile_pic.name, profile_pic)
+            return Response({'profile_pic': request.build_absolute_uri(user.profile_pic.url)}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class VideoUpload(APIView):
@@ -121,116 +179,22 @@ class VideoUpload(APIView):
     parser_classes = (MultiPartParser, FormParser, )
 
     def post(self, request, format=None):
-        print request.data
-        upload = request.data['video_file']
-        fh = NamedTemporaryFile(delete=False)
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            profile_video = serializer.save(user=request.user)
 
-        extension = upload.name.split(".")[1]
-        filename = "{}.{}".format(fh.name, extension)
+            pub_msg = {
+                "task_type": 1,
+                "user_id": request.user.pk,
+                "video_path": '/opt/tink_api_v2/tink_api' + profile_video.video_file.url,
+                "os_type": profile_video.os_type
+            }
 
-        with BufferedWriter(FileIO(filename, "w")) as dest:
-            for c in upload.chunks():
-                dest.write(c)
+            r.publish('recognition_tasks', json.dumps(pub_msg))
 
-        profile_video = ProfileVideo.objects.create(
-            user=request.user,
-            video_file=filename,
-            os_type=request.data['os_type']
-        )
-
-        pub_msg = {
-            "task_type": 1,
-            "user_id": request.user.pk,
-            "video_path": profile_video.video_file.url,
-            "os_type": profile_video.os_type
-        }
-
-        r.publish('recognition_tasks', json.dumps(pub_msg))
-
-        return Response({}, status=201)
-
-
-@api_view(['POST'])
-@permission_classes((AllowAny, ))
-def check_fb_user_registered(request):
-    try:
-        User.objects.get(facebook_id=request.data['facebook_id'])
-        return Response({'is_registered': True})
-    except ObjectDoesNotExist:
-        return Response({'is_registered': False})
-
-
-@api_view(['POST'])
-@permission_classes((AllowAny, ))
-def check_google_user_registered(request):
-    try:
-        User.objects.get(google_id=request.data['google_id'])
-        return Response({'is_registered': True})
-    except ObjectDoesNotExist:
-        return Response({'is_registered': False})
-
-
-@api_view(['GET'])
-def my_profile(request):
-    RESPONSE = {}
-    user = request.user
-    serializer = UserSerializer(user)
-    RESPONSE['user'] = serializer.data
-    images = [
-        {"url": "http://api.androidhive.info/feed/img/nat.jpg"},
-        {"url": "http://api.androidhive.info/feed/img/time.png"},
-        {"url": "http://api.androidhive.info/feed/img/lincoln.jpg"},
-        {"url": "http://api.androidhive.info/feed/img/discovery.jpg"},
-        {"url": "http://api.androidhive.info/feed/img/lincoln.jpg"},
-        {"url": "http://api.androidhive.info/feed/img/ktm.png"}
-    ]
-    RESPONSE['images'] = images
-    return Response(RESPONSE)
-
-
-@api_view(['GET'])
-def profile(request):
-    RESPONSE = {}
-    user_id = request.query_params['user_id']
-    try:
-        user = User.objects.get(pk=user_id)
-        if user == request.user:
-            return redirect(reverse('my-profile'))
-        serializer = UserSerializer(user)
-        RESPONSE['user'] = serializer.data
-        RESPONSE['is_friend'] = request.user.are_friends(user)
-        RESPONSE['status_code'] = 0
-        return Response(RESPONSE, status=status.HTTP_200_OK)
-    except ObjectDoesNotExist:
-        RESPONSE['msg'] = 'User does not exist!'
-        RESPONSE['status_code'] = 1
-        return Response(RESPONSE, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['POST'])
-def update_profile(request):
-    response = {}
-    user = request.user
-    serializer = UserSerializer(user, data=request.data, partial=True)
-    if serializer.is_valid():
-        serializer.update(user, request.data)
-        response['msg'] = 'Profile updated successfully.'
-        response['status_code'] = 0
-    else:
-        response['msg'] = 'Error updating profile.'
-        response['errors'] = serializer.errors
-        response['status_code'] = 1
-    return Response(response)
-
-
-@api_view(['GET'])
-def search(request):
-    q = request.query_params['query']
-    user = request.user
-    users = User.objects.filter(Q(first_name__icontains=q) | Q(
-        last_name__icontains=q) | Q(username__icontains=q)).exclude(pk=user.pk)
-    serializer = SearchUserSerializer(users, many=True, context={'user': user})
-    return Response(serializer.data)
+            return Response({}, status=201)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
