@@ -92,7 +92,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'tink',
-        'USER': 'redpulse',
+        'USER': 'stephen',
         'PASSWORD': 'root',
         'HOST': '127.0.0.1',
         'PORT': '5432',
@@ -107,7 +107,7 @@ EMAIL_HOST = 'smtp.sendgrid.net'
 EMAIL_HOST_USER = 'redpulse'
 EMAIL_HOST_PASSWORD = 'redpulse2016'
 SERVER_EMAIL = 'hello@redpulse.co.ke'
-DEFAULT_FROM_EMAIL = 'Tink <no-reply@tink.com>'
+DEFAULT_FROM_EMAIL = 'Tink <no-reply@tinkapp.ml>'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_DEBUG = True
@@ -135,7 +135,7 @@ USE_L10N = True
 
 USE_TZ = True
 
-BASE_API_URL = 'http://192.168.0.30:8000'
+BASE_API_URL = 'http://tinkapp.ml'
 
 
 # Static files (CSS, JavaScript, Images)
