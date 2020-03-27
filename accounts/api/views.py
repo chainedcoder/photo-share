@@ -16,7 +16,7 @@ from rest_framework.views import APIView
 from rest_framework_jwt.settings import api_settings
 
 from accounts.models import ProfileVideo
-from photoshare.settings import r
+from tink_api.settings import r
 from .serializers import (UserSerializer, PasswordChangeSerializer, ProfilePictureSerializer,
                           VideoUploadSerializer, GeneralUserSerializer)
 
@@ -91,6 +91,8 @@ class UserList(ListAPIView):
             users = User.objects.filter(
                 Q(first_name__icontains=q) | Q(last_name__icontains=q) | Q(username__icontains=q)
             ).exclude(pk=self.request.user.pk)
+        else:
+            users = User.objects.all()
         return users
 
     def paginate_queryset(self, queryset):
@@ -186,7 +188,7 @@ class VideoUpload(APIView):
             pub_msg = {
                 "task_type": 1,
                 "user_id": request.user.pk,
-                "video_path": '/opt/photoshare_v2/photoshare' + profile_video.video_file.url,
+                "video_path": '/opt/tink_api_v2/tink_api' + profile_video.video_file.url,
                 "os_type": profile_video.os_type
             }
 
@@ -199,5 +201,5 @@ class VideoUpload(APIView):
 
 @api_view(['GET'])
 def get_qr_code(request):
-    return Response({'qr_code': request.user.photoshare_qrcode.url})
+    return Response({'qr_code': request.user.tink_qrcode.url})
 
