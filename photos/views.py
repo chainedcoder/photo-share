@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from core.utils import SmallResultsSetPagination
 from feed.models import Feed
 from follows.models import Follow
-from tink_api.settings import r
+from photoshare.settings import r
 from .models import UploadedPhoto, PhotoStream, PhotoStreamPhoto
 from .serializers import (ImageSerializer, MainFeedSerializer, OutboxFeedBaseSerializer,
                           OutboxFeedSerializer, FeedPhotoSerializer, OutboxImageSendSerializer, OutboxSentSerializer)
@@ -37,7 +37,7 @@ class UploadPhoto(CreateAPIView):
             pub_msg = {
                 "task_type": 2,
                 "username": request.user.username,
-                "image_path": '/opt/tink_api_v2/tink_api' + photo.image.url,
+                "image_path": '/opt/photoshare_v2/photoshare' + photo.image.url,
                 "photo_id": photo.pk
             }
 

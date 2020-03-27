@@ -3,7 +3,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 
 from photos.models import UploadedPhoto
-from tink_api.celery import app
+from photoshare.celery import app
 from .models import Feed
 
 User = get_user_model()

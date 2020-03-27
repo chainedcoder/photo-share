@@ -7,7 +7,7 @@ from celery.utils.log import get_task_logger
 from django.core.cache import cache
 
 from .models import Notification
-from tink_api.settings import DEFAULT_FROM_EMAIL as sender_email
+from photoshare.settings import DEFAULT_FROM_EMAIL as sender_email
 
 
 @task

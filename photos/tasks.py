@@ -4,8 +4,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 
 from follows.models import Follow
-from tink_api.settings import r
-from tink_api.celery import app
+from photoshare.settings import r
+from photoshare.celery import app
 from .models import UploadedPhoto, PhotoStream, PhotoStreamPhoto
 
 channel_name = 'recognition_results'
