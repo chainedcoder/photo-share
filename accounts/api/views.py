@@ -16,7 +16,7 @@ from rest_framework.views import APIView
 from rest_framework_jwt.settings import api_settings
 
 from accounts.models import ProfileVideo
-from tink_api.settings import r
+from photoshare.settings import r
 from .serializers import (UserSerializer, PasswordChangeSerializer, ProfilePictureSerializer,
                           VideoUploadSerializer, GeneralUserSerializer)
 
@@ -188,7 +188,7 @@ class VideoUpload(APIView):
             pub_msg = {
                 "task_type": 1,
                 "user_id": request.user.pk,
-                "video_path": '/opt/tink_api_v2/tink_api' + profile_video.video_file.url,
+                "video_path": '/opt/photoshare_v2/photoshare' + profile_video.video_file.url,
                 "os_type": profile_video.os_type
             }
 
