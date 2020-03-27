@@ -1,6 +1,6 @@
 Hi {{ first_name }},
-Welcome to Tink!
+Welcome to Photoshare!
 Could you please click the link below to verify that this is your email address?
 {{ site_info.protocol }}://{{ site_info.domain }}{% url 'verify-email' email_verification_key %}
 Thanks!
-Tink.
+Photoshare.

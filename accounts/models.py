@@ -93,7 +93,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
     last_seen = models.DateTimeField(_('last seen'), blank=True, null=True)
     profile_pic = models.ImageField(upload_to='uploads/profile_pics', null=True)
-    tink_qrcode = models.ImageField(upload_to='tink_qrcodes', null=True)
+    photoshare_qrcode = models.ImageField(upload_to='photoshare_qrcodes', null=True)
     bio = models.TextField(null=True, blank=True)
     birthday = models.DateField(null=True)
 

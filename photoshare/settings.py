@@ -28,7 +28,7 @@ SECRET_KEY = 'xu3quoh&wyyfs(h(wci!d@zs6ygfswrqh@(t+#@73+2a**%!@^'
 DEBUG = True
 
 ADMINS = (
-    ('Denny', 'dennis@redpulse.co.ke'),
+    ('Steve', 'stephen.nyamweya.o@gmail.com'),
 )
 
 ALLOWED_HOSTS = ['*']
@@ -92,8 +92,8 @@ WSGI_APPLICATION = 'photoshare.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'tink',
-        'USER': 'redpulse',
+        'NAME': 'photoshare',
+        'USER': 'redpulse,
         'PASSWORD': 'root',
         'HOST': '127.0.0.1',
         'PORT': '5432',
@@ -111,7 +111,7 @@ EMAIL_HOST = 'smtp.sendgrid.net'
 EMAIL_HOST_USER = 'redpulse'
 EMAIL_HOST_PASSWORD = 'redpulse2016'
 SERVER_EMAIL = 'hello@redpulse.co.ke'
-DEFAULT_FROM_EMAIL = 'Tink <no-reply@tink.com>'
+DEFAULT_FROM_EMAIL = 'Photoshare <no-reply@photoshare.com>'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_DEBUG = True

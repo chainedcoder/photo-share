@@ -1,1 +1,1 @@
-You have a new tink request from {{ request_from }}.
+You have a new photoshare request from {{ request_from }}.

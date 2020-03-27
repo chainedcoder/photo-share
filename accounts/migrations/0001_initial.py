@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
                 ('date_joined', models.DateTimeField(default=django.utils.timezone.now, verbose_name='date joined')),
                 ('last_seen', models.DateTimeField(null=True, verbose_name='last seen', blank=True)),
                 ('profile_pic', models.ImageField(null=True, upload_to='uploads/profile_pics')),
-                ('tink_qrcode', models.ImageField(null=True, upload_to='tink_qrcodes')),
+                ('photoshare_qrcode', models.ImageField(null=True, upload_to='photoshare_qrcodes')),
                 ('bio', models.TextField(null=True, blank=True)),
                 ('birthday', models.DateField(null=True)),
                 ('groups', models.ManyToManyField(related_query_name='user', related_name='user_set', to='auth.Group', blank=True, help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.', verbose_name='groups')),
