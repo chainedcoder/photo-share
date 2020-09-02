@@ -23,7 +23,7 @@ pylibmc==1.5.2
 pytz==2017.2
 qrcode==5.3
 redis==2.10.5
-requests==2.18.2
+requests==2.20.0
 simplejson==3.11.1
 six==1.10.0
 uritemplate==3.0.0
