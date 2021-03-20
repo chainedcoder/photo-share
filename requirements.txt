@@ -11,7 +11,7 @@ djangorestframework==3.9.1
 djangorestframework-jwt==1.11.0
 idna==2.5
 itypes==1.1.0
-Jinja2==2.9.6
+Jinja2==2.11.3
 kombu==4.1.0
 MarkupSafe==1.0
 olefile==0.44
